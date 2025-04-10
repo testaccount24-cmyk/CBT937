@@ -1,0 +1,115 @@
+---   BDMUSADD PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2024 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+
+ BDMUSADD -  Add a single new Userid to the BRODCAST Dataset.
+
+
+Execution Mode:   TSO Command - using the PUTLINE interface
+--------- ----
+
+
+Description of Operation:
+----------- -- ---------
+
+  The BDMUSADD program is used to add one Userid to the BRODCAST
+Dataset, if it doesn't exist there already.
+
+  This is how the operation works.  The Userid records in the
+BRODCAST Dataset are scanned sequentially from the beginning to
+the end.  Two things are looked for:
+
+1.  The first empty Userid-Slot combination.  This is recorded.
+
+2.  The occurrence of a duplicate Userid, already in the BRODCAST
+    dataset.
+
+  If there is no duplicate Userid, but there is an empty slot, then
+BDMUSADD adds the new Userid into the empty slot.
+
+  If there is a duplicate Userid, then BDMUSADD reports this fact,
+and exits.
+
+  If there is no duplicate Userid, and no empty slot, then BDMUSADD
+looks for an empty User Message Record, key X'FF', converts it into
+a Userid Record, key X'01', chains the new Userid Record to the old
+Userid Records, and adds the new Userid into its first slot.
+
+  If there is no duplicate Userid, and there are no empty User Message
+Records left in the BRODCAST Dataset, then BDMUSADD reports the error
+condition and exits.
+
+
+JCL Requirements or TSO Allocations:
+--- ------------ -- --- -----------
+
+  The BDMUSADD program is a TSO command, but it uses the PUTLINE
+interface to write its output to the terminal.  Therefore you can
+run the BDMUSADD program under TSO-in-batch, and still see its
+output.  You can (of course) also run BDMUSADD as a TSO command.
+
+Allocation Requirement -
+
+  The particular copy of the BRODCAST dataset which you want to
+look at, must be pointed to by the BRODCAST DD name, as follows:
+
+ALLOC FI(BRODCAST) DA(your.BRODCAST.dataset) SH REUSE
+
+or
+
+//BRODCAST  DD  DISP=SHR,DSN=your.BRODCAST.dataset
+
+
+Subcommands:
+-----------
+            INSTRUCTIONS FOR BDMUSADD TSO COMMAND
+            ------------ --- -------- --- -------
+
+      BDMUSADD userid               - Add this Userid to the
+                                      BRODCAST Dataset
+
+
+Report:
+------
+
+  Here is what you see if BDMUSADD is adding a Userid USR1247 to
+  the BRODCAST Dataset:
+
+ BDMUSADD PROGRAM  -  Broadcast Master  Version   1.5.0A
+ Copyright (c) 1995-2025 Sam Golob Systems Programming LLC - All Rights Reserved
+
+        USERID USR1247 WAS ADDED IN RECORD 0002B2  SLOT 03
+
+
+Program Logic:
+------- -----
+
+  The basic principles of the program logic were explained above,
+in the "Description of Operation" section.
+
+
+Error Handling:
+----- --------
+
+  If no Userid name is added after the BDMUSADD command, the following
+message is issued:
+
+ PLEASE ENTER THE USERID NAME AFTER COMMAND NAME
+
+* ----------------------------------------------------------------- *
+
+  If the Userid name entered after the command name, is already a
+Userid in this copy of the BRODCAST Dataset, then the following
+message is issued:
+
+ THIS USERID USR1247 ALREADY EXISTS IN BROADCAST
+
+* ----------------------------------------------------------------- *
+
+  If the BRODCAST DD allocation is missing, then BDMUSADD issues
+the following message:
+
+ IEC130I BRODCAST DD STATEMENT MISSING
+        BAD OPEN - ALLOC F(BRODCAST) DA(SYS1.BRODCAST) SH REU
+

@@ -1,0 +1,273 @@
+---   BDMSCAN  PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+ BDMSCAN  -  Look at a BRODCAST Dataset, summarize its condition,
+             and tell you everything about it afterwards.  Format
+             all of its records, and run all the Userid chains
+             optionally, formatting all of those records too.
+
+
+Execution Mode:   Batch Program
+--------- ----
+
+Description of Operation:
+----------- -- ---------
+
+The BDMSCAN program produces a summary report of all parts of the
+given BRODCAST Dataset.  This is shown in the BRODMAP report.  In
+the process of making that report, you optionally can dump and
+format all fields of all BRODCAST Dataset records to the BRODPRNT
+report.  In a different optional report, the BRODUSER report, all
+User Message Record chains (for all Userids with attached messages)
+can be run, and their individual records formatted, as well.
+
+
+JCL Requirements:
+--- ------------
+
+  DD Names:        BRODCAST  -  required
+  -- -----         BRODMAP   -  required
+                   BRODPRNT  -  optional
+                   BRODUSER  -  optional
+
+
+  Required DD names -
+
+BRODCAST - This is the BRODCAST Dataset whose records are being
+           scanned.
+
+  //BRODCAST DD  DSN=SBGOLOB.NEW.BRODCAST,DISP=SHR
+
+BRODMAP  - This is a SYSOUT dataset containing the summary map of
+           the BRODCAST Dataset pointed to by DD Name BRODCAST.
+
+  Sample Report Appearance
+  ------ ------ ----------
+
+ ---   BDMSCAN  PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+ Copyright (c) 1995-2025 Sam Golob Systems Programming LLC - All Rights Reserved
+ ---   BDMSCAN    ---   BRODCAST Dataset Summary Report    ---
+BRODCAST Dataset Name  :     SBGOLOB.NEW.BRODCAST
+BRODCAST Dataset Volser:     WORK04
+         This BRODCAST Dataset IS NOT IN USE by the system.
+Total Available Blocks in Dataset                                9750
+Blocks Required for Notify Service (Directory+Messages)           260
+< Statistics about Global "Notices" Messages >
+         Number of Active BRODCAST Notices Messages                17
+         Number of Inactive BRODCAST Notices Messages             233
+< Record counts from the BRODCAST Keys       >
+         Count  of BRODCAST Header Record (Should be 1)             1
+         Number of BRODCAST "Notices" Directory Records            10
+         Number of BRODCAST "Notices" Message Records             250
+         Number of USER "Mail" Directory Records                  449
+         Number of USER "Mail" Message Records                   3114
+         Count  of Free Search Record (Should be 1)                 1
+         Number of Empty USER "Mail" Record Slots                5925
+< The Following Users Have Messages Waiting  >
+   ------------------------------------------------------------------
+   USR0001         37  |   USR0002       1875  |   USR0003        256
+   USR0004          1  |   USR0005          4  |   USR0006          5
+   USR0007          1  |   USR0008         17  |   USR0009         28
+   USR0010         38  |   USR0011          6  |   USR0012          4
+   USR0013          4  |   USR0014          3  |   USR0015          8
+   USR0016          6  |   USR0017          1  |   USR0018          3
+   USR0019          1  |   USR0020        136  |   USR0021         24
+   USR0022          1  |   USR0023         11  |   USR0024          4
+   USR0025          1  |   USR0026          2  |   USR0027          1
+   USR0028          8  |   USR0029         58  |   USR0030         78
+   USR0031          1  |   USR0032          1  |   USR0033          2
+   USR0034         17  |   USR0035         35  |   USR0036          4
+   USR0037         25  |   USR0038          2  |   USR0039          3
+   USR0040          7  |   USR0041        174  |   USR0042          3
+   USR0043         41  |   USR0044         27  |   USR0045        111
+   USR0046          3  |   USR0047         27  |   USR0048          3
+   USR0049          6  |                       |
+   ------------------------------------------------------------------
+Number of TSO Users Defined in this BRODCAST dataset:            3855
+Blocks found to be Orphaned (not connected to a Userid):            0
+(Use the BDMDIAG TSO command to display and/or delete these.)
+(BDMDIAG REPORT reports orphaned blocks, and BDMDIAG DELBAD deletes them.)
+
+
+
+  Optional DD names -
+
+BRODPRNT - This is a SYSOUT dataset containing the detail map of
+           all BRODCAST Dataset records.  If you don't code PARM=ALL,
+           Userid Message Records and Free User Message Records are
+           left out.  The beginning of the report is shown here.  In
+           actuality, the complete report is very detailed.
+
+  Sample Report Appearance (very beginning of the report)
+  ------ ------ ----------
+
+   ---   BDMSCAN  PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+   Copyright (c) 1995-2025 Sam Golob Systems Programming LLC - All Right
+  ---   BDMSCAN    ---   BRODCAST Dataset - Record Display Report   ---
+
+
+Relative Record Number in Decimal:       0
+Relative Record Number in Hex:      000000
+K----+----1----+----2----+----3----+----4----+----5----+----6----+----7----+----
+                SYS1.BRODCAST DATA SET LEVEL 2
+00000000000210F4EEEF4CDDCCCEE4CCEC4ECE4DCECD4F00000000000000000000000000
+40001001600660A02821B296431230413102530355530200150000001000000000000000
+
+        **** Format of BRODCAST Header Record, Key X'04' ****
+  RBA of First Notices Directory Record :   000001    Decimal Value:       1
+  RBA of First Userid Directory Record  :   000106    Decimal Value:     262
+  Total Number of Records in BRODCAST   :   00002616  Decimal Value:    9750
+  Maximum Record Number for Notices     :   00FA      Decimal Value:     250
+  RBA of Free Search Record             :   000105    Decimal Value:     261
+  Gen Number for Incore Notices Table   :   00000001  Decimal Value:       1
+
+Relative Record Number in Decimal:       1
+Relative Record Number in Hex:      000001
+K----+----1----+----2----+----3----+----4----+----5----+----6----+----7----+----
+
+000000000000000000000000000000100001000010000100001000010000100001000010
+00100B0200C0300D0400E0500F060000700108002090030A0040B0050C0060D0070E0080F0090000
+
+     **** Format of BRODCAST Notices Directory Record, Key X'00' ****
+ RBA of next Notices Directory Record:       000002    Decimal Value:       2
+ Slot #      1    Notice #      1  Hex 0001    Active   Hex RBA:  00000B   Decim
+ Slot #      2    Notice #      2  Hex 0002    Active   Hex RBA:  00000C   Decim
+ Slot #      3    Notice #      3  Hex 0003    Active   Hex RBA:  00000D   Decim
+ Slot #      4    Notice #      4  Hex 0004    Active   Hex RBA:  00000E   Decim
+ Slot #      5    Notice #      5  Hex 0005    Active   Hex RBA:  00000F   Decim
+ Slot #      6    Notice #      6  Hex 0006    Active   Hex RBA:  000010   Decim
+ Slot #      7    Notice #      7  Hex 0007    Active   Hex RBA:  000011   Decim
+ Slot #      8    Notice #      8  Hex 0008    Active   Hex RBA:  000012   Decim
+ Slot #      9    Notice #      9  Hex 0009    Active   Hex RBA:  000013   Decim
+ Slot #     10    Notice #     10  Hex 000A    Active   Hex RBA:  000014   Decim
+ Slot #     11    Notice #     11  Hex 000B    Active   Hex RBA:  000015   Decim
+ Slot #     12    Notice #     12  Hex 000C    Active   Hex RBA:  000016   Decim
+ Slot #     13    Notice #     13  Hex 000D    Active   Hex RBA:  000017   Decim
+ Slot #     14    Notice #     14  Hex 000E    Active   Hex RBA:  000018   Decim
+ Slot #     15    Notice #     15  Hex 000F    Active   Hex RBA:  000019   Decim
+ Slot #     16    Notice #     16  Hex 0010    Active   Hex RBA:  00001A   Decim
+ Slot #     17    Notice #     17  Hex 0011   Inactive  Hex RBA:  00001B   Decim
+ Slot #     18    Notice #     18  Hex 0012   Inactive  Hex RBA:  00001C   Decim
+ Slot #     19    Notice #     19  Hex 0013   Inactive  Hex RBA:  00001D   Decim
+ Slot #     20    Notice #     20  Hex 0014   Inactive  Hex RBA:  00001E   Decim
+ Slot #     21    Notice #     21  Hex 0015   Inactive  Hex RBA:  00001F   Decim
+ Slot #     22    Notice #     22  Hex 0016   Inactive  Hex RBA:  000020   Decim
+ Slot #     23    Notice #     23  Hex 0017    Active   Hex RBA:  000021   Decim
+ Slot #     24    Notice #     24  Hex 0018   Inactive  Hex RBA:  000022   Decim
+ Slot #     25    Notice #     25  Hex 0019   Inactive  Hex RBA:  000023   Decim
+
+          and so forth, for all record types in the BRODCAST Dataset.
+
+
+BRODUSER - This is a SYSOUT dataset containing the detailed report
+           of all the Userid User Message chains.
+
+  Sample Report Appearance
+  ------ ------ ----------
+
+ ---   BDMSCAN  PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+ Copyright (c) 1995-2025 Sam Golob Systems Programming LLC - All Rights Reserved
+---   BDMSCAN    ---   BRODCAST Userid Messages Display Report   ---
+
+
+   *** Chain of Messages for USERID:  USER001  --  Start: 0002C7  End: 0002EB
+
+Message Number      1  for Userid:  USER001
+Relative Record Number in Decimal:     711
+Relative Record Number in Hex:      0002C7
+K----+----1----+----2----+----3----+----4----+----5----+----6----+----7----+----
+ .06.56.33 JOB48077 $HASP165 PEO25ZE5 ENDED AT OURCMPNY  MAXCC=3 CN(INTERNAL)
+04FF4FF4FF4DDCFFFFF45CCEDFFF4DCDFFECF4CDCCC4CE4DEDCDDDE44DCECC7F4CD4CDECDDCD5000
+3B06B56B330162480770B81271650756259550554540130649347580041733E3035D95359513D000
+
+
+Message Number      2  for Userid:  USER001
+Relative Record Number in Decimal:     712
+Relative Record Number in Hex:      0002C8
+K----+----1----+----2----+----3----+----4----+----5----+----6----+----7----+----
+ .06.56.36 JOB48050 $HASP165 PEO25ZEP ENDED AT OURCMPNY  MAXCC=0 CN(INTERNAL)
+04FF4FF4FF4DDCFFFFF45CCEDFFF4DCDFFECD4CDCCC4CE4DEDCDDDE44DCECC7F4CD4CDECDDCD5000
+3B06B56B360162480500B81271650756259570554540130649347580041733E0035D95359513D000
+
+    and so forth, for all Userid User Message chains....
+
+
+Program Logic:
+------- -----
+
+  The scan of the BRODCAST Dataset takes place in several stages.
+
+1.  First, the EESCB control block, which contains the name of the
+    BRODCAST Dataset which is in use by the system (and its volser)
+    A RDJFCB is done for the BRODCAST Dataset pointed to by the
+    program, and thus, it can be determined if we are pointing to
+    the BRODCAST Dataset that is currently in use by the system.
+    This fact is reported, whether we have is the active BRODCAST
+    Dataset, or not.
+
+2.  Next, the Notices Directory Chain is read, and an incore copy
+    of the Notices Directory is made.
+
+3.  From this, it can be determined how many of the Notices Messages
+    are actually in use, and that fact is reported.
+
+4.  Next, all the records of the BRODCAST Dataset are read sequentially
+    in ascending order, and a table of all their keys is made.  From
+    this table, all the different types of keys are counted and
+    tabulated.  As this is taking place, if the BRODPRNT DD is coded,
+    each record is hex dumped by the BDMPRINT subprogram, and each
+    field in each type of record is formatted for display, in both Hex
+    and Decimal.
+
+5.  After that, all the Userid Message chains are run, off all the
+    Userids which contain outstanding messages.  These are totalled up
+    and tabulated for each Userid.  But while this is going on, if the
+    BRODUSER DD is coded, the BDMPRINT program will format a report
+    showing a Hex dump of all the Userid Messages in each chain, and
+    a complete formatting of each field in each message.  In the
+    process of running each Userid chain, the incore table of keys,
+    which was created in Step 4, is altered, with each key of X'03'
+    being changed to X'88' when each User Message (that is attached
+    to a Userid) is read.  Any X'03' keys therefore, which remain
+    unchanged after all the Userid message chains are run, must
+    therefore belong to "orphaned messages" that are not pointed to
+    by any Userid.  Those are now tabulated, and totalled.  If the
+    total is not 0, you must then run the BDMDIAG REPORT and BDMDIAG
+    DELBAD TSO commands, to report on the orphaned messages, and to
+    delete their contents (respectively).  Doing this will make those
+    "orphaned message slots" available for later use.
+
+6.  That's all, folks!
+
+
+Error Handling:
+----- --------
+
+  If either of the Required DD Names, BRODCAST or BRODMAP is missing,
+then the appropriate error messages, as seen below, are issued to the
+JOB LOG, and a Return Code of 16 is issued.
+
+  If either of the Optional DD Names, BRODPRNT or BRODUSER is not
+coded, then that report is missing from the output of the job.
+
+  Sample error messages on the JOB LOG :  (shown as appropriate)
+  ------ ----- -------- -- --- --- ---
+
+ BDMSC00I     ----------------------------
+ BDMSC10E     BRODCAST DD Name is missing...
+ BDMSC00I     ----------------------------
+ BDMSC00I     ----------------------------
+ BDMSC10E     BRODMAP  DD Name is missing...
+ BDMSC00I     ----------------------------
+ BDMSC00I     ----------------------------
+ BDMSC07I     BRODCAST and BRODMAP are
+ BDMSC07I      both Required DD Names....
+ BDMSC00I     ----------------------------
+ BDMSC00I     ----------------------------
+ BDMSC07I     BRODPRNT and BRODUSER are
+ BDMSC07I      both Optional DD Names....
+ BDMSC00I     ----------------------------
+ IEF142I SBGOLOBA BDMSCAN - STEP WAS EXECUTED - COND CODE 0016
+
+

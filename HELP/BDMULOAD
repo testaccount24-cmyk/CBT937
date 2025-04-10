@@ -1,0 +1,250 @@
+---   BDMULOAD PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+
+ BDMULOAD -  Loads a BRODCAST Dataset, which does not have any
+             Userids in it yet, with a complete set of new Userids
+             from a list.  The list must be in a format, LRECL=8,
+             RECFM=FB, such as that produced by the BDMGTUID program,
+             followed by the BDMUSORT program.  These are 7-character
+             Userids with the 8th character being a blank.  The list
+             of new Userids to be loaded is in the BDMUSIN DD Name.
+
+             If Userids are already present in the BRODCAST Dataset
+             which the BDMULOAD program is attempting to load (with
+             new Userids from the BDMUSIN DD Name), then no loading
+             is done, a Return Code of 4 is sent, and the BDMUSOUT DD
+             name gets filled with a dump of all the Userid names (in
+             BDMGTUID format) that are already present in BRODCAST.
+             If the UIDPRES DD Name is also there, then a detail
+             report of the (already) loaded Userids is produced.  If
+             the BDMUSIN DD Name is missing, then Diagnostic Reports
+             are produced in SYSPRINT and (if there) UIDPRES DD
+             Names, telling whether the BRODCAST DD already contains
+             Userids, and (in UIDPRES) what they are.
+
+             If you want to add a few new Userids to the BRODCAST
+             Dataset that already has Userids in it, use the BDMUSADD
+             TSO program, which you can run under TSO-in-batch, to
+             add them individually.
+
+
+Execution Mode:   Batch Program
+--------- ----
+
+Description of Operation:
+----------- -- ---------
+
+  BDMULOAD will accept Userids from the BDMUSIN DD name, and will
+  reject the loading of these Userids into the BRODCAST Dataset if
+  there already are ANY real Userids loaded in the BRODCAST Dataset.
+
+  If the target BRODCAST Dataset already contains some Userids, then
+  BDMULOAD will dump them (in BDMGTUID format) into the BDMUSOUT DD
+  Name, and (if the UIDPRES DD Name is there) it will report detailed
+  information about these Userids in the UIDPRES sysout report.  A
+  Return Code of 4 is produced, when Userids are already loaded in
+  the target BRODCAST Dataset.
+
+  The reason for this behavior, is to make it easier to reload the
+  (already loaded) Userids later, into a truly empty (of Userids)
+  BRODCAST Dataset.
+
+
+JCL Requirements:
+--- ------------
+
+  The following DD names are Required !!!
+  --- --------- -- ----- --- --------
+
+  BRODCAST, SYSPRINT, BDMUSOUT
+
+ If any of these DD Names is missing, see the Error Handling section
+ below.
+
+ If you are loading a BRODCAST Dataset that is empty of Userids, then
+
+  BDMUSIN is also a necessary DD Name.
+
+  The following DD name is Optional
+  --- --------- -- ---- -- --------
+
+  UIDPRES    (See Note at bottom of "Error Handling" section below)
+
+
+BRODCAST - This is the BRODCAST Dataset which is to be loaded
+           with new Userids.
+
+      Sample JCL definition for the USERIDS concatenation.
+
+  //BRODCAST DD DISP=SHR,DSN=SBGOLOB.NEW.BRODCAST
+
+
+SYSPRINT - A SYSOUT DD name which contains the Summary Report
+           telling you about the Userid loading process.
+
+  Sample Report
+  ------ ------
+
+ ---   BDMULOAD PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+ Copyright (c) 1995-2025 Sam Golob Systems Programming LLC - All Rights Reserved
+         -  BDMULOAD Program  -  Userid Bulk Loader Program  -
+
+ BRODCAST DSN = SBGOLOB.NEW.BRODCAST
+      MEMBER  =
+      VOLSER  = WORK05
+      DSORG   = DA
+      RECFM   = F
+      LRECL   =          129
+      BLKSIZE =          129
+
+    Total # of Userids Present in BRODCAST DSNAME          0
+    Total # of Empty Slots in Brodcast available:       4005
+
+    BRODCAST can contain all the Userids in BDMUSIN.
+
+    Userids in  BDMUSIN  Dataset  :       3855
+    Userids Successfully Loaded   :       3855
+
+
+BDMUSOUT - A new file in RECFM=FB, LRECL=8 format which will contain
+           all Userids already in the BRODCAST Dataset (in BDMGTUID
+           format).  If the load of the BDMUSIN Userids was
+           successful, then this dataset is empty, after the BDMULOAD
+           run.  If there previously were Userids loaded in BRODCAST,
+           then those Userids are now dumped into this dataset.
+
+  //BDMUSOUT DD DSN=SBGOLOB.BRODCAST.USROUT,DISP=(,CATLG,DELETE),
+  //    UNIT=SYSALLDA,
+  //    DCB=(RECFM=FB,LRECL=8,BLKSIZE=8000,DSORG=PS),
+  //    SPACE=(TRK,(5,15),RLSE),VOL=SER=WORK04
+
+
+BDMUSIN  - A file in RECFM=FB, LRECL=8 format which contains all the
+           Userids to be loaded into the BRODCAST Dataset.
+
+  //BDMUSIN  DD DISP=SHR,DSN=SBGOLOB.NEW.USERIDS
+
+
+UIDPRES  - A SYSOUT DD name which contains a detailed report showing
+           all the Userids that were already in the BRODCAST Dataset
+           if it had any.  If the BRODCAST Dataset did not have any
+           Userids loaded previously, and the current load was
+           successful, then the UIDPRES report will not show any
+           Userids listed, as follows:
+
+ ---   BDMULOAD PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+ Copyright (c) 1995-2025 Sam Golob Systems Programming LLC - All Rights Reserved
+         -  BDMULOAD Program  -  Userids Already Present  -
+
+ BRODCAST DSN = SBGOLOB.BIGN.BRODCAST
+      MEMBER  =
+      VOLSER  = WORK05
+      DSORG   = DA
+      RECFM   = F
+      LRECL   =          129
+      BLKSIZE =          129
+
+    UID Count    Userid   RBA Hex   RBA Dec   Slot #
+    ---------    ------   -------   -------   ------
+
+
+    Total # of Empty Slots in Brodcast available:       4005
+
+
+Error Handling:
+----- --------
+
+  DD Name Protection
+  -- ---- ----------
+
+  If any of the following required DD Names are missing :
+
+   BRODCAST, SYSPRINT, or BDMUSOUT
+
+then the BDMULOAD program ends with a Return Code of 16, and
+produces the following output to the JES LOG, depending on
+which of the required DD Names were missing:
+
+  BDMUL01I     DDNFLAG = 06     * diagnosis *
+  BDMUL00I     ----------------------------
+  BDMUL10E     BRODCAST DD Name is missing...
+  BDMUL00I     ----------------------------
+  BDMUL00I     ----------------------------
+  BDMUL10E     BDMUSOUT DD Name is missing...
+  BDMUL00I     ----------------------------
+  BDMUL00I     ----------------------------
+  BDMUL10E     SYSPRINT DD Name is missing...
+  BDMUL00I     ----------------------------
+  BDMUL00I     ----------------------------
+  BDMUL09E     Please correct your JCL.......
+  BDMUL00I     ----------------------------
+  IEF142I SBGOLOBD GETUSERS - STEP WAS EXECUTED - COND CODE 0016
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  If the BDMUSIN DD Name is missing:
+
+then a message is issued saying that no Userids will be loaded because
+there is no input, and a Diagnostic Report only will be produced.
+Also, a message is always sent to the JOB LOG as follows:
+
+     BDMUL01I     DDNFLAG = 1D     *  - OK -   *
+     BDMUL00I     ------------------------------
+     BDMUL07I     //BDMUSIN DD input is needed.
+     BDMUL06I     Reports are for Diagnosis only
+     BDMUL00I     ------------------------------
+
+  There are two possible cases:
+
+1.  There are no Userids yet loaded into this BRODCAST Dataset.  So
+    the resulting SYSPRINT report will say:
+
+ ---   BDMULOAD PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+ Copyright (c) 1995-2025 Sam Golob Systems Programming LLC - All Rights Reserved
+         -  BDMULOAD Program  -  Userid Bulk Loader Program  -
+
+    Diagnostic Report Only - No BDMUSIN was present.
+
+
+    Total # of Userids Present in BRODCAST DSNAME          0
+    Total # of Empty Slots in Brodcast available:       4005
+
+    BDMUSID was not present, so Userids were not loaded.
+
+2.  There are Userids already loaded into this BRODCAST Dataset.  So
+    the resulting SYSPRINT report will now say:
+
+ ---   BDMULOAD PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+ Copyright (c) 1995-2025 Sam Golob Systems Programming LLC - All Rights Reserved
+         -  BDMULOAD Program  -  Userid Bulk Loader Program  -
+
+    Diagnostic Report Only - No BDMUSIN was present.
+
+
+    Total # of Userids Present in BRODCAST DSNAME       3855
+    Total # of Empty Slots in Brodcast available:       4005
+
+    Real userids are in BRODCAST. Cannot load new ones.
+
+And in either case, a Return Code of 4 is produced.
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+IMPORTANT NOTE:
+
+  If the UIDPRES DD Name is PRESENT, then:
+         -------            -------
+
+1.  Where Userids have not yet, been loaded, the UIDPRES will NOT
+    show any Userid names.
+
+2.  Where Userids have already been loaded or are in the BRODCAST
+    Dataset already, then all the Userids in BRODCAST will appear
+    in the UIDPRES report, and they will also be dumped into the
+    BDMUSOUT dataset.
+
+A Return Code of 4 is produced in both of these cases.
+
+

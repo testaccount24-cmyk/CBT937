@@ -1,0 +1,85 @@
+---   BDMNLIST PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+ BDMNLIST -  List Global Notices Messages that are in the
+             BRODCAST Dataset.  This command does not list
+             the Notify Messages that are in incore storage.
+
+
+Execution Mode:   TSO Command - using the PUTLINE interface
+--------- ----
+
+Description of Operation:
+----------- -- ---------
+
+  The BDMNLIST program reads the Global Notices from the BRODCAST
+Dataset.  This is done by scanning the Notices Directory for Active
+Message numbers and then by going to the requisite RBA where the
+Notice is.  To display the incore copy of the Notices, you still
+have to use IBM's LISTBC command.
+
+
+JCL Requirements or TSO Allocations:
+--- ------------ -- --- -----------
+
+  The BDMNLIST program is a TSO command, but it uses the PUTLINE
+interface to write its output to the terminal.  Therefore you can
+run the BDMNLIST program under TSO-in-batch, and still see its
+output.  You can (of course) also run BDMNLIST as a TSO command.
+
+Allocation Requirement -
+
+  The particular copy of the BRODCAST dataset which you want to
+clean, must be pointed to by the BRODCAST DD name, as follows:
+
+ALLOC FI(BRODCAST) DA(your.BRODCAST.dataset) SH REUSE
+
+or
+
+//BRODCAST  DD  DISP=SHR,DSN=your.BRODCAST.dataset
+
+
+Subcommands:   none
+-----------
+
+            INSTRUCTIONS FOR BDMNLIST TSO COMMAND
+            ------------ --- -------- --- -------
+         BDMNLIST   -  Display all Global Notices (showing the
+                       Notice number)
+
+Sample Report:
+------ ------
+
+  MSGNO 001 ---------------------------------------------------
+  MSGNO 002 * * * * * * * * * * * * * * * * * * * * * * * * * *
+  MSGNO 003 * * * * * * * * * * * * * * * * * * * * * * * * * *
+  MSGNO 004 * *                                             * *
+  MSGNO 005 * *                                             * *
+  MSGNO 006 * *      WELCOME TO THE Z-18 MVS SYSTEM...      * *
+  MSGNO 007 * *                                             * *
+  MSGNO 008 * *                                             * *
+  MSGNO 009 * * * * * * * * * * * * * * * * * * * * * * * * * *
+  MSGNO 010 * * * * * * * * * * * * * * * * * * * * * * * * * *
+  MSGNO 011 ---------------------------------------------------
+  MSGNO 012       It is our great pleasure to serve your
+  MSGNO 013               computing needs!
+  MSGNO 014
+
+
+Program Logic:
+------- -----
+
+  The basic principles of the program logic were mentioned above,
+in the "Description of Operation" section.
+
+Error Handling:
+----- --------
+
+  If the BRODCAST DD allocation is missing, then BDMNLIST issues
+the following message:
+
+    IEC130I BRODCAST DD STATEMENT MISSING
+    BAD OPEN - ALLOC F(BRODCAST) DA(SYS1.BRODCAST) SH REU
+
+

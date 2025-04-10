@@ -1,0 +1,129 @@
+---   BDMUSORT PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+
+ BDMUSORT -  Sorts the outputs from one or more invocations of the
+             BDMGTUID program to produce a sorted list of Userids
+             with all duplicates removed.  This list of Userids is
+             capable of being fed to the BDMULOAD program, so these
+             Userids can be Bulk Loaded into a new BRODCAST Dataset.
+
+
+Execution Mode:   Batch Program
+--------- ----
+
+Description of Operation:
+----------- -- ---------
+
+  BDMUSORT will LINK to your SORT program, sort all inputted Userids
+  (8-characters) and will afterwards delete duplicate entries.
+
+
+JCL Requirements:
+--- ------------
+
+  All the following DD names are required !!!
+  --- --- --------- -- ----- --- --------
+
+  USERIDS, USRIDOUT, SORTIN, SORTOUT, SYSOUT, SYSPRINT
+
+ If any of these DD Names is missing, see the Error Handling section
+ below.
+
+USERIDS  - This is the input concatenation of files of Userids,
+           usually created by the BDMGTUID program from one or
+           more BRODCAST Datasets.  (LRECL=8)
+
+      Sample JCL definition for the USERIDS concatenation.
+
+  //USERIDS  DD DISP=SHR,DSN=SBGOLOB.NEW.USROUT
+  //         DD DISP=SHR,DSN=SBGOLOB.SYS1.USROUT
+  //         DD DISP=SHR,DSN=SBGOLOB.SYS2.USROUT
+
+
+USRIDOUT - This is the output, sorted, Userid file (LRECL=8) with
+           all duplicate Userids deleted.  Suitable for input to the
+           BDMULOAD program.
+
+  //USRIDOUT DD DISP=SHR,DSN=SBGOLOB.NEW.USRSORT
+
+
+SORTIN, SORTOUT - These are work files needed by the external SORT
+           program which is LINKed to by BDMUSORT.
+
+      Sample JCL definitions:
+
+  //SORTIN   DD  DSN=&&SORT,DISP=(NEW,PASS),UNIT=SYSALLDA,
+  //             DCB=(RECFM=FB,LRECL=8,BLKSIZE=8000),
+  //             SPACE=(TRK,(5,5))
+  //SORTOUT  DD  DSN=&&SORT,DISP=(SHR,PASS),VOL=REF=*.SORTIN
+
+
+SYSOUT   - A SYSOUT DD name which displays the output of the external
+           SORT utility program.
+
+
+SYSPRINT - A SYSOUT DD name which contains the report showing
+           everything that was done in the post-sorting process.
+
+  Sample Report
+  ------ ------
+
+ ---   BDMUSORT PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+ Copyright (c) 1995-2025 Sam Golob Systems Programming LLC - All Rights Reserved
+ ---   BDMUSORT   ---   Userid Sort and Delete Duplicates ---
+
+
+    Total Userids Read Into Program :       3856
+    Total Userids Read Out from Sort:       3856
+
+    Total Userids Without Duplicates:       3855
+
+
+Program Logic
+------- -----
+
+  Concatenated files of 8-character records are read into an
+ascending external sort, and the output of the sort is read back
+into the program.  Duplicate records are then deleted, and all
+non-duplicates are written to the 8-character USRIDOUT output
+file.
+
+
+Error Handling:
+----- --------
+
+  DD Name Protection
+  -- ---- ----------
+
+  ALL of the following DD Names must be present:
+
+   USERIDS, USRIDOUT, SORTIN, SORTOUT, SYSOUT, SYSPRINT
+
+    Diagnosis:
+
+  All DD Names must be present, otherwise a "write to the JES LOG"
+  is written that a DD Name is missing, and the Return Code is 16.
+
+  A "write to the JES LOG" is always written with a Diagnosis
+  message.  If there are no errors, the following appears:
+
+  BDMUS01I     DDNFLAG = 3F     *  Correct  *
+  IEF142I SBGOLOBC BDMUSORT - STEP WAS EXECUTED - COND CODE 0000
+
+  If incorrect, something like the following appears instead:
+
+  BDMUS01I     DDNFLAG = 36     * diagnosis *
+  BDMUS00I     ----------------------------
+  BDMUS10E     USERIDS  DD Name is missing...
+  BDMUS00I     ----------------------------
+  BDMUS00I     ----------------------------
+  BDMUS10E     USRIDOUT DD Name is missing...
+  BDMUS00I     ----------------------------
+  BDMUS00I     ----------------------------
+  BDMUS09E     Please correct your JCL.......
+  BDMUS00I     ----------------------------
+  IEF142I SBGOLOBC BDMUSORT - STEP WAS EXECUTED - COND CODE 0016
+
+

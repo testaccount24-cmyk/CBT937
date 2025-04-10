@@ -1,0 +1,141 @@
+---   BDMNXPRT PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+ BDMNXPRT -  Export all of the Global Notices in a BRODCAST
+             Dataset, to an EXPORT file in BDMNOTFY format.
+             Since the EXPORT file is intended to be executed
+             as a CLIST, PROC 0 and CONTROL ASIS (for preserving
+             lowercase characters) are put in at the beginning,
+             preceding the generated BDMNOTFY statements.
+
+
+Execution Mode:   TSO Command - using the PUTLINE interface
+--------- ----
+
+Description of Operation:
+----------- -- ---------
+
+  The BDMNXPRT program is used to EXPORT all of the Global Notify
+Messages from a BRODCAST Dataset into an external file, in BDMNOTFY
+format, so they can be reloaded into a new BRODCAST Dataset.
+
+  Operation is similar to the BDMNLIST program, except that the
+output file is produced and written to the EXPORT DD name.
+
+  The EXPORT DD name must be a Variable Blocked file of LRECL=255.
+
+
+JCL Requirements or TSO Allocations:
+--- ------------ -- --- -----------
+
+  The BDMNXPRT program is a TSO command, but it uses the PUTLINE
+interface to write its output to the terminal.  Therefore you can
+run the BDMNXPRT program under TSO-in-batch, and still see its
+output.  You can (of course) also run BDMNXPRT as a TSO command.
+And you can capture the outputs using the TSOE, TSOB, or TSOV REXXes
+that are in the CLIST library (from Mark Zelden).
+
+Allocation Requirement -
+
+  The particular copy of the BRODCAST dataset which you want to
+look at, must be pointed to by the BRODCAST DD name, as follows:
+
+ALLOC FI(BRODCAST) DA(your.BRODCAST.dataset) SH REUSE
+
+or
+
+//BRODCAST  DD  DISP=SHR,DSN=your.BRODCAST.dataset
+
+  You must also define a Variable Blocked File with an LRECL of 255
+to receive the Exported Records, as output of the BDMNXPRT command.
+
+ALLOC F(EXPORT) DA(EXPORT.DATA) SPACE(5 45) TRACKS RECFM(V B) -
+    LRECL(255) UNIT(SYSDA) REUSE
+
+or
+
+//EXPORT    DD  DISP=SHR,DSN=your.EXPORT.dataset,
+//              DCB=(DSORG=PS,RECFM=VB,LRECL=255,BLKSIZE=6000),
+//              UNIT=SYSALLDA,SPACE=(TRK,(5,45),RLSE)
+
+
+Subcommands:
+-----------
+            INSTRUCTIONS FOR BDMNXPRT TSO COMMAND
+            ------------ --- ------ --- -------
+      BDMNXPRT                     - Export all Global Notify
+                                     Messages to the EXPORT DD
+
+Report:
+------
+
+  If you issue the BDMNXPRT command against a BRODCAST Dataset,
+  you will get output that is similar to that of the BDMNLIST
+  command, as follows:
+
+
+BDMNXPRT PROGRAM  -  Broadcast Master  Version   1.5.0A
+Copyright (c) 1995-2025 Sam Golob Systems Programming  LLC - All Rights Reserved
+
+          BDMNXPRT Broadcast Master  Version   1.5.0A
+          -------  --------- ------  -------   -----
+       Copyright (c) 1995-2024 Sam Golob Systems Programming
+
+MSGNO 001 ---------------------------------------------------
+MSGNO 002 * * * * * * * * * * * * * * * * * * * * * * * * * *
+MSGNO 003 * * * * * * * * * * * * * * * * * * * * * * * * * *
+MSGNO 004 * *                                             * *
+MSGNO 005 * *                                             * *
+MSGNO 006 * *      WELCOME TO THE Z-18 MVS SYSTEM...      * *
+MSGNO 007 * *                                             * *
+MSGNO 008 * *                                             * *
+MSGNO 009 * * * * * * * * * * * * * * * * * * * * * * * * * *
+MSGNO 010 * * * * * * * * * * * * * * * * * * * * * * * * * *
+MSGNO 011 ---------------------------------------------------
+MSGNO 012       It is our great pleasure to serve your
+MSGNO 013               computing needs!
+MSGNO 014
+
+---------------------------------------------------------------
+
+Program Logic:
+------- -----
+
+  The basic principles of the program logic are similar to those
+of the BDMNLIST program, except that an extra output file is written
+to the EXPORT DD name, in BDMNOTFY format, and prefixed by:
+
+PROC 0
+CONTROL ASIS          (to preserve lowercase characters)
+
+  This output file may be used as CLIST input to reload all of the
+Global Notify messages that were dumped, into another BRODCAST
+Dataset.
+
+  The messages are surrounded by "open curly bracket" and "close
+curly bracket", so that enclosed special characters are preserved,
+and the proper message length is loaded into the new BRODCAST Dataset.
+
+
+Error Handling:
+----- --------
+
+
+  If the BRODCAST DD allocation is missing, then BDMNXPRT issues
+the following message:
+
+ IEC130I BRODCAST DD STATEMENT MISSING
+        Bad Open - ALLOC F(BRODCAST) DA(SYS1.BRODCAST) SH REU
+
+* ----------------------------------------------------------------- *
+
+  If the EXPORT DD allocation is missing, then BDMNXPRT issues
+the following message:
+
+ IEC130I EXPORT   DD STATEMENT MISSING
+     BAD OPEN - ALLOC F(EXPORT) DA(EXPORT.DATA) SPACE(5 45) TRACKS RECFM(V B) -
+          LRECL(255) UNIT(SYSDA) REUSE
+
+* ----------------------------------------------------------------- *
+

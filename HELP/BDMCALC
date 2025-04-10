@@ -1,0 +1,178 @@
+---   BDMCALC  PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+ BDMCALC  -  Calculate the allocation size of a new BRODCAST
+             dataset which you will later want to create using
+             the BDMINIT program.
+
+
+Execution Mode:   Batch Program
+--------- ----
+
+Description of Operation:
+----------- -- ---------
+
+The BDMCALC program is intended as a precursor to the BDMINIT
+program, which creates a newly formatted BRODCAST dataset,
+according to specs that you specify in SYSIN DD cards.  The
+same SYSIN DD cards will work in both the BDMCALC and BDMINIT
+programs.  The BDMCALC program can therefore be considered as a
+"dry run" to experiment with quantities, before actually
+running the BDMINIT program "for real", to create and format a
+new BRODCAST dataset.
+
+
+JCL Requirements:
+--- ------------
+
+  Required DD names -
+
+BRODUMMY - This is a temporary dataset, which must have a 1 Cylinder
+           PRIMARY allocation, and it must reside on the same device
+           type of DASD that you want to allocate your new BRODCAST
+           dataset on.  Secondary allocations do not matter.  The
+           important thing is that the primary allocation be exactly
+           1 Cylinder.
+
+           The reason for this is that the BRODUMMY dataset is used
+           to calculate how many BRODCAST records will fit on this
+           device type, in both tracks and cylinders.  Since BDMCALC
+           actually writes dummy records to BRODUMMY, and counts how
+           many records it writes, that is why the allocation must
+           be exactly one cylinder.  No TRKCALC type invocations are
+           made by BDMCALC.  ONLY the dummy writes are used, to
+           determine the track capacity of this device type.  So
+           that is why the BRODUMMY DD must be allocated on the same
+           device type as the BRODCAST dataset which you are
+           planning to create.
+
+           A RDJFCB invocation is made, to check up on how you coded
+           your JCL for the BRODUMMY DD name.  If anything isn't the
+           way it is supposed to be, the program tells you what is
+           wrong, and then stops its execution.
+
+      Sample JCL definition for BRODUMMY DD name.
+
+      //BRODUMMY DD  DSN=&&BRDUMM,
+      //             DISP=(NEW,DELETE,DELETE),
+      //             SPACE=(CYL,(1,3),RLSE),
+      //             UNIT=SYSALLDA,
+      //             VOL=SER=WORK05,
+      //   DCB=(DSORG=DA,RECFM=FB,BLKSIZE=129,KEYLEN=1,LRECL=129)
+
+
+SYSPRINT - This is a sysout dataset to contain the report.
+
+
+SYSIN    - Control cards that tell BDMCALC how to calculate sizes.
+           All SYSIN keywords have to begin in column 1.
+           The BDMCALC report, itself, describes permissible SYSIN
+           keywords, as follows:
+
+             Admissible SYSIN Keywords:
+             ---------- ----- ---------
+           NOTIFY=nnn      (number of Global Notify records)
+           USERIDS=nnnn    (number of Userids to be loaded)
+           MESSAGES=nnnnn  (number of User Messages in BRODCAST)
+           EXTRAUSERIDRECS=nn (extra Userid records in BRODCAST
+                               - new Userids / 9)
+           RECORDS=nnnnnn  (total number of records in BRODCAST)
+           TRACKS=nnnn     (total tracks in BRODCAST allocation)
+           CYLINDERS=nnn   (total cylinders in BRODCAST allocation)
+           ----------------------------------------------
+           SYSIN Keywords have to be entered in Column 1.
+           ----------------------------------------------
+
+           The TRACKS=, CYLINDERS=, and RECORDS= keywords
+            are for calculation purposes only, and are not used
+            in determining minimum BRODCAST Dataset size.
+
+           Default SYSIN Values - (if not overridden)
+           ------- ----- ------
+           NOTIFY=125            0000007D
+           USERIDS=1000          000003E8
+           MESSAGES=7000         00001B58
+
+Program Logic:
+------- -----
+
+Checking the JCL for the BRODUMMY DD name...
+
+  After checking for the required DD names of BRODUMMY and SYSIN,
+BDMCALC does a RDJFCB on BRODUMMY (displaying the results in SYSPRINT)
+and checks the following in its JCL:
+
+  1.  Is the allocation in Cylinders?
+  2.  Is the primary allocation 1 cylinder?
+  3.  Is the DSORG=DA?
+  4.  Is the RECFM=F?
+  5.  Is the LRECL=129?
+  6.  Is the BLKSIZE=129?
+  7.  Is the KEYLEN=1?
+
+  If any of these is not true, then BDMCALC issues the appropriate
+message and exits.
+
+Writing dummy records to the BRODUMMY DD name...
+
+  If the BRODUMMY DD name has been correctly allocated, them BDMCALC
+starts writing dummy messages to it, of the appropriate size--the
+same size as real BRODCAST dataset records.  When end-of-track is
+reached, the number of records written is recorded and saved.  When
+end-of-extent is reached, and this must be one cylinder's worth, the
+number of records written is calculated from records per track and
+tracks per cylinder.  These quantities are reported to SYSPRINT after
+they have been saved.
+
+Processing the SYSIN keywords...
+
+  After this, SYSIN is OPENed and READ, and each keyword's quantity
+is processed in order.  A later invocation of the same keyword
+"should" override an earlier invocation of the same keyword, until
+SYSIN records are exhausted.  This is true for the calculations--the
+last value coded is used, but under "SYSIN Quantities Entered", ALL
+of the valid SYSIN values that were entered, are repeated as they
+were coded.  All valid quantities are then saved.  Default values for
+NOTIFY, USERID, and MESSAGES keywords are plugged in, if they haven't
+been coded (see above).
+
+Doing the Calculations...
+
+  Then, once the required SYSIN keyword quantities have been read,
+each quantity coded is treated separately, and the appropriate
+calculations are performed, with the results displayed.  Then,
+based on the NOTIFY, USERIDS, MESSAGES, and EXTRAUSERIDRECS
+keywords, a total minimum number of records is arrived at, and
+allocation recommendations are made.
+
+
+Error Handling:
+----- --------
+
+SYSIN input - If input for any of the admissible keywords is not
+        numeric, then the job is aborted after all SYSIN keywords
+        have been processed, and the characters in error are
+        replaced by an asterisk (*) as follows:
+
+      For example:  input - //SYSIN    DD  *
+                            TRACKS=£48
+                            RECORDS=10§46
+                            CYLINDERS=110
+                            USERIDS=4234
+                            USERIDS=863¥
+                            MESSAGES=34978
+
+                    is reported as:
+
+                TRACKS=    Decimal:  *48     INVALID NUMERIC
+                RECORDS=   Decimal:  10*46   INVALID NUMERIC
+                CYLINDERS= Decimal:  110
+                USERIDS=   Decimal:  4234
+                USERIDS=   Decimal:  863*    INVALID NUMERIC
+                MESSAGES=  Decimal:  34978
+
+      If any invalid numeric characters have been coded, processing
+      is stopped, and the user is instructed to correct the errors
+      and resubmit the job.
+

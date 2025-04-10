@@ -1,0 +1,144 @@
+---   BDMNOTFY PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+ BDMNOTFY -  Write and Delete Global Notices to any BRODCAST
+             Dataset.  This command does not update the in-storage
+             copy of the Notify Messages.
+
+
+Execution Mode:   TSO Command - using the PUTLINE interface
+--------- ----
+
+Description of Operation:
+----------- -- ---------
+
+  To send a Global Notification message to all TSO users, through
+the Notification Section of the BRODCAST Dataset.  This replaces the
+OPER SEND,SAVE subcommand, and the OPER SEND,DELETE subcommand from
+IBM.
+
+  The BDMNOTFY program can write Global Notices to any BRODCAST
+Dataset.  This is done by Notice Number only, not like the
+inconsistent IBM commnads OPER SEND ' ',SAVE which finds the first
+empty Notices Record and writes to it, whereas OPER SEND nn,DELETE
+has to have an actual number always specified.  BDMNOTFY always
+works by message number, whether either writing or deleting Notices.
+
+  Message numbers may be displayed using the BDMNLIST TSO command.
+
+
+JCL Requirements or TSO Allocations:
+--- ------------ -- --- -----------
+
+  The BDMNOTFY program is a TSO command, but it uses the PUTLINE
+interface to write its output to the terminal.  Therefore you can
+run the BDMNOTFY program under TSO-in-batch, and still see its
+output.  You can (of course) also run BDMNOTFY as a TSO command.
+
+Allocation Requirement -
+
+  The particular copy of the BRODCAST dataset which you want to
+write Notify messages to, must be pointed to by the BRODCAST DD
+name, as follows:
+
+ALLOC FI(BRODCAST) DA(your.BRODCAST.dataset) SH REUSE
+
+or
+
+//BRODCAST  DD  DISP=SHR,DSN=your.BRODCAST.dataset
+
+
+Subcommands:
+-----------
+
+        INSTRUCTIONS FOR BDMNOTFY TSO COMMAND
+        ------------ --- -------- --- -------
+
+      SYNTAX:   BDMNOTFY nnn 'text of message    '
+          OR:   BDMNOTFY nnn "text of message    "
+          OR:   BDMNOTFY nnn text of message
+          OR:   BDMNOTFY nnn -DEL(ETE)   (delete MSGNO nnn)
+          OR:   BDMNOTFY nnn -BLA(NKS)   (30 blanks in MSGNO nnn)
+          OR:   BDMNOTFY CLEARALL (marks all Notices as deleted)
+
+      where nnn is the Message Number.  Pre-existing message numbers
+      can be displayed using the BDMNLIST command.
+
+      You can control how many blanks are in a Notices Message
+      by enclosing the message text in either single quotes, or
+      double quotes, as is shown above.
+
+  Note:  The BDMNOTFY CLEARALL only does a "logical delete"
+         by marking all of the Notice Directory Records so
+         that they do not point to Notice Records.  The data
+         in the Notice Records still remains, though.  To
+         clear all the extraneous data out, run the BDMCLEAN
+         TSO command with the N option, to only clean out
+         the Notices.
+
+Program Logic:
+------- -----
+
+  In order to write a Notification message using the Notify section of
+the BRODCAST Dataset, BDMNOTFY operates by Message Number.  After
+parsing the parameters of the command, BDMNOTFY finds the directory
+record corresponding to the given number, and turns that message number
+on or off, depending on whether it is to write or delete a message.
+The message record is cleared to binary zeros, before either writing
+or deleting any message.
+
+  If a Blank Message is to be written, using the BDMNOTFY nn -BLANKS
+command, then 30 blanks are written.  This number was chosen rather
+arbitrarily.  If you want to change it for yourself, say (for example)
+to 20, then the zap cards are:
+
+     NAME BDMNOTFY BDMNOTFY
+     VER    000006 001E       Quantity of 30
+     REP    000006 0014       Quantity of 20
+
+This is so that you can do it yourself.
+
+  If you are running TSO/E Release 3 or higher, (z/OS 1.3 or higher),
+and you have modified the active BRODCAST Dataset Notices Section
+using BDMNOTFY, you must also modify the incore Notices Table as well.
+After TSO/E Release 3, you do this by issuing the APF Authorized TSO
+command BDMNUPD, and then run LISTBC once.  This sequence will update
+the incore Notices Table, and LISTBC will be able to display your
+changes.  We also recommend that you do this with a CLIST, so that
+the results will always be consistent.
+
+
+Error Handling:
+----- --------
+
+  If the BRODCAST DD allocation is missing, then BDMNOTFY issues
+the following message:
+
+    IEC130I BRODCAST DD STATEMENT MISSING
+           Bad OPEN - ALLOC F(BRODCAST) DA(SYS1.BRODCAST) SH REU
+
+  ----------------------------------------------------------------
+
+  If the message number parameter is not numeric, the BDMNOTFY
+program says so, as follows:
+
+For example:  BDMNOTFY 8- Message
+
+will yield the result:
+
+    Message number parameter is not numeric.
+
+  ----------------------------------------------------------------
+
+  If the message number parameter is greater than the maximum number
+of Notify Message slots in this copy of the BRODCAST Dataset, then
+the BDMNOTFY program yields the following:
+
+For example:  BDMNOTFY 330 Message
+
+will yield the result:
+
+ Message number greater than maximum of  250. Request is not processed.
+
+

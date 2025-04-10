@@ -1,0 +1,116 @@
+---   BDMUSDEL PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+
+ BDMUSDEL -  Delete a single Userid from the BRODCAST Dataset, and
+             also delete ALL of its attached User Messages.
+
+
+Execution Mode:   TSO Command - using the PUTLINE interface
+--------- ----
+
+
+Description of Operation:
+----------- -- ---------
+
+  The BDMUSDEL program is used to delete one Userid from the BRODCAST
+Dataset.  If that Userid has attached User Messages, then these are
+deleted as well.
+
+  This is how the operation works.  The Userid records in the
+BRODCAST Dataset are scanned sequentially from the beginning to
+the end, until either of two things happens:
+
+1.  The Userid Name is encountered in the BRODCAST Dataset.
+
+2.  The Userid Name is not encountered, and the end of all the
+    Userids in the Userid Records is reached.
+
+  If there is a Userid occurrence, then it is checked to see if any
+messages are attached to it.  If any are, the User Message chain is
+run, and all the attached messages are zeroed out and converted to
+empty User Messages, with key X'FF' and the binary position of the
+record on the track, in the first data byte.  The Free Search Record
+is adjusted accordingly, if that is needed.
+
+  Then, after that, the Userid Record Slot is zeroed out.
+
+Sample Report for Userid Deletion:
+------ ------ --- ------ --------
+
+ BDMUSDEL PROGRAM  -  Broadcast Master  Version   1.5.0A
+ Copyright (c) 1995-2025 Sam Golob Systems Programming LLC - All Rights Reserved
+
+
+   -->  MESSAGES DELETED FOR THE FORMER USERID USR1247.
+
+000F5E 11.03.37 JOB03173 $HASP165 DPC08ZA4 ENDED AT OURCMPNY  MAXCC=4 CN(INTERNA
+000F5F 04.02.45 JOB13539 $HASP165 DPC08ZA4 ENDED AT OURCMPNY  MAXCC=4 CN(INTERNA
+000F60 04.40.38 JOB13770 $HASP165 DPC08Z96 ENDED AT OURCMPNY  MAXCC=0 CN(INTERNA
+        USER USR1247 HAD       3   DEFERRED TSO MESSAGES
+        * - - - - END OF MESSAGES FOR THIS USER - - - - *
+
+   -->  USERID USR1247 HAS BEEN DELETED FROM THE BROADCAST DATASET.
+
+
+
+JCL Requirements or TSO Allocations:
+--- ------------ -- --- -----------
+
+  The BDMUSDEL program is a TSO command, but it uses the PUTLINE
+interface to write its output to the terminal.  Therefore you can
+run the BDMUSDEL program under TSO-in-batch, and still see its
+output.  You can (of course) also run BDMUSDEL as a TSO command.
+
+Allocation Requirement -
+
+  The particular copy of the BRODCAST dataset which you want to
+look at, must be pointed to by the BRODCAST DD name, as follows:
+
+ALLOC FI(BRODCAST) DA(your.BRODCAST.dataset) SH REUSE
+
+or
+
+//BRODCAST  DD  DISP=SHR,DSN=your.BRODCAST.dataset
+
+
+Subcommands:
+-----------
+            INSTRUCTIONS FOR BDMUSDEL TSO COMMAND
+            ------------ --- -------- --- -------
+
+      BDMUSDEL userid            - Delete this Userid from the
+                                   BRODCAST Dataset, and delete
+                                   all of its attached messages.
+
+Program Logic:
+------- -----
+
+  The basic principles of the program logic were explained above,
+in the "Description of Operation" section.
+
+
+Error Handling:
+----- --------
+
+  If no Userid name is added after the BDMUSDEL command, the following
+message is issued:
+
+ PLEASE ENTER THE USERID NAME AFTER COMMAND NAME
+
+* ----------------------------------------------------------------- *
+
+  If the Userid name entered after the command name, does not exist
+in the BRODCAST Dataset, then the following message is issued:
+
+ * - - NO USERID RECORD FOR USER USR1247  - - *
+
+* ----------------------------------------------------------------- *
+
+  If the BRODCAST DD allocation is missing, then BDMUSDEL issues
+the following message:
+
+ IEC130I BRODCAST DD STATEMENT MISSING
+        BAD OPEN - ALLOC F(BRODCAST) DA(SYS1.BRODCAST) SH REU
+

@@ -1,0 +1,155 @@
+---   BDMLIST PROGRAM   -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+ BDMLIST -   List SOME, or ALL of the User Messages belonging
+             to a given Userid which is defined in the BRODCAST
+             Dataset.
+
+ BDMLRBA -   Same as BDMLIST, except that the RBA of each User
+             Message is printed before the User Message itself,
+             similarly to the way BDMDEL shows the RBA of each
+             message deleted.  Therefore BDMLRBA can be used
+             for diagnosis purposes.
+
+Execution Mode:   TSO Command - using the PUTLINE interface
+--------- ----
+
+Description of Operation:
+----------- -- ---------
+
+  The BDMLIST program is used to LIST all, or some, of the User
+Messages which belong to a given Userid.  This is done by accessing
+the Userid Record in the Userid Directory, and starting from the
+beginning Userid Message in the chain, running through the chain and
+printing all the records in the chain.
+
+
+JCL Requirements or TSO Allocations:
+--- ------------ -- --- -----------
+
+  The BDMLIST program is a TSO command, but it uses the PUTLINE
+interface to write its output to the terminal.  Therefore you can
+run the BDMLIST program under TSO-in-batch, and still see its
+output.  You can (of course) also run BDMLIST as a TSO command.
+
+Allocation Requirement -
+
+  The particular copy of the BRODCAST dataset which you want to
+look at, must be pointed to by the BRODCAST DD name, as follows:
+
+ALLOC FI(BRODCAST) DA(your.BRODCAST.dataset) SH REUSE
+
+or
+
+//BRODCAST  DD  DISP=SHR,DSN=your.BRODCAST.dataset
+
+
+Subcommands:
+-----------
+            INSTRUCTIONS FOR BDMLIST TSO COMMAND
+            ------------ --- ------ --- -------
+      BDMLIST userid                       - List all messages
+                                             for one userid.
+      BDMLIST userid  SKIP(mm)  MSGS(nn)   - List nn messages
+                                             for one userid, after
+                                             skipping the first mm
+                                             messages.
+      BDMLIST ALL$#@                       - List all messages
+                                             for all userids defined
+                                             in the BRODCAST dataset.
+
+Report:
+------
+
+  Here is what you see if Userid IBMUSER has one sample message
+  and we issue:  BDMLIST IBMUSER
+
+  Sample User message.....
+  User IBMUSER has       1   Deferred TSO Messages
+  * - - - - End of Messages for this User - - - - *
+
+---------------------------------------------------------------
+
+  Here is what you see if Userid IBMUSER has one sample message
+  and we issue:  BDMLRBA IBMUSER
+
+  0002C7 Sample User message.....
+  User IBMUSER has       1   Deferred TSO Messages
+  * - - - - End of Messages for this User - - - - *
+
+---------------------------------------------------------------
+
+  Explanation:  The 0002C7 number is the Hex representation of
+         the RBA of the BRODCAST record which the message had
+         occupied.
+
+         Sample User message.....
+         is the actual message text.
+
+         User IBMUSER has       1   Deferred TSO Messages
+         tells you how many messages the Userid had before the
+         deletion.
+
+
+  Here is what you see if Userid IBMUSER had three sample message
+  and we issue:  BDMLIST IBMUSER SKIP(1) MSGS(1)
+
+  Number of MSGS to Skip           1
+  Limit  of MSGS to List           1
+  Sample user message 2
+  User IBMUSER has       3   Deferred TSO Messages
+  * - - - - End of Messages for this User - - - - *
+
+  so Userid IBMUSER has three messages, but the first, and the
+  third were skipped from the list.  The first, because of the
+  SKIP(1) keyword, and the third, because of the MSGS(1) keyword
+  that limits the listing to 1 message.
+
+
+Program Logic:
+------- -----
+
+  The basic principles of the program logic were mentioned above,
+in the "Description of Operation" section.
+
+Error Handling:
+----- --------
+
+  BDMLIST checks the entered Userid (the first positional keyword)
+and runs the chain of Userid records to see if this Userid is there.
+If it is not, the following message is issued:
+
+ * - - No USERID Record for User USER134  - - *
+
+* ----------------------------------------------------------------- *
+
+  If the BRODCAST DD allocation is missing, then BDMLIST issues
+the following message:
+
+ IEC130I BRODCAST DD STATEMENT MISSING
+        Bad Open - ALLOC F(BRODCAST) DA(SYS1.BRODCAST) SH REU
+
+* ----------------------------------------------------------------- *
+
+  If no userid was entered after the BDMLIST command then BDMLIST
+returns the reply:
+
+        Please enter the USERID name after Command name
+
+* ----------------------------------------------------------------- *
+
+  If the values entered into the SKIP(mm) or MSGS(nn) are not
+numeric, then the non-numeric character entered is replaced by
+an asterisk (to make the error more visible), and the following
+messages are displayed:
+
+ Limit  of MSGS to Delete  *888*4       Non-Numeric
+ Number of MSGS to Skip    *99*6        Non-Numeric
+
+ MSGS or SKIP keyword values were non-numeric.
+ No User Messages have been deleted.
+   ---------------
+   Return Code = 8
+   ---------------
+

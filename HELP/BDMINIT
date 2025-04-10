@@ -1,0 +1,259 @@
+---   BDMINIT  PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+ BDMINIT  -  Create and format a new BRODCAST dataset whose sizes
+             are determined by SYSIN cards entirely.  After creation
+             by the BDMINIT program, this new BRODCAST dataseet must
+             be loaded with USERIDs and possibly with user messages
+             later.  USERIDs may be loaded by the batch program
+             BDMULOAD (bulk userid loader) and user messages may be
+             loaded by the batch program BDMMLOAD (bulk message
+             loader).  Or, userids may be added one at a time, by
+             the BDMUSADD program, and messages may be added, one
+             at a time, by the BDMSEND program.
+
+
+Execution Mode:   Batch Program
+--------- ----
+
+Description of Operation:
+----------- -- ---------
+
+The BDMINIT program is intended to be preceded by trial runs of
+the BDMCALC program, which uses the same SYSIN control cards.
+BDMCALC is used to experiment with, and determine the appropriate
+number of Global Notify records, Userid records, and User message
+records which will be created in the new BRODCAST dataset that
+is built by the BDMINIT program.  BDMINIT itself, can perform
+the same calculations as BDMCALC, but it is safer to conduct "dry
+runs" first, before you want to actually create and format a new
+BRODCAST dataset.
+
+
+JCL Requirements:
+--- ------------
+
+  Required DD names -
+
+BRODUMMY - This is a temporary dataset, which must have a 1 Cylinder
+           PRIMARY allocation, and it must reside on the same device
+           type of DASD that you want to allocate your new BRODCAST
+           dataset on.  Secondary allocations do not matter.  The
+           important thing is that the primary allocation be exactly
+           1 Cylinder.
+
+           The reason for this is that the BRODUMMY dataset is used
+           to calculate how many BRODCAST records will fit on this
+           device type, in both tracks and cylinders.  Since BDMINIT
+           actually writes dummy records to BRODUMMY, and counts how
+           many records it writes, that is why the allocation must
+           be exactly one cylinder.  No TRKCALC type invocations are
+           made by BDMINIT.  ONLY the dummy writes are used, to
+           determine the track capacity of this device type.  So
+           that is why the BRODUMMY DD must be allocated on the same
+           device type as the BRODCAST dataset which you are
+           planning to create.
+
+           A RDJFCB invocation is made, to check up on how you coded
+           your JCL for the BRODUMMY DD name.  If anything isn't the
+           way it is supposed to be, the program tells you what is
+           wrong, and then stops its execution.
+
+      Sample JCL definition for BRODUMMY DD name.
+
+      //BRODUMMY DD  DSN=&&BRDUMM,
+      //             DISP=(NEW,DELETE,DELETE),
+      //             SPACE=(CYL,(1,3),RLSE),
+      //             UNIT=SYSALLDA,
+      //             VOL=SER=WORK05,
+      //   DCB=(DSORG=DA,RECFM=FB,BLKSIZE=129,KEYLEN=1,LRECL=129)
+
+
+BRODCOUT - This is the newly created and formatted BRODCAST dataset
+           which is made by the BDMINIT program.  Sample JCL is as
+           follows:
+
+      //BRODCOUT DD  DSN=new.BRODCAST.dataset.name,
+      //         DISP=(NEW,CATLG,DELETE),
+      //         SPACE=(CYL,(nnn,0)),      <== CYL recommended
+      //         UNIT=unit,
+      //         VOL=SER=volser,
+      //    DCB=(DSORG=DA,RECFM=F,BLKSIZE=129,KEYLEN=1,LRECL=129)
+
+           The important thing here is the SPACE allocation.
+           SPACE allocation can be either in tracks or in
+           cylinders, with cylinders recommended.  BDMINIT will
+           fill up all allocated space with extra user message
+           records, so it makes a big difference how much space
+           you actually specify.  If the space allocation is too
+           small for the required number of records calculated
+           from the coded SYSIN cards, then the BDMINIT program
+           stops its operation, and reports the SPACE allocation
+           problem, recommending the minimum amount of space that
+           you will have to allocate, in order to create the new
+           BRODCAST dataset of the appropriate size.
+
+
+SYSPRINT - This is a sysout dataset to contain the report.
+
+
+SYSIN    - Control cards that tell BDMINIT how to calculate sizes.
+           All SYSIN keywords have to begin in column 1.
+           The BDMINIT report, itself, describes permissible SYSIN
+           keywords, as follows:
+
+             Admissible SYSIN Keywords:
+             ---------- ----- ---------
+           NOTIFY=nnn      (number of Global Notify records)
+           USERIDS=nnnn    (number of Userids to be loaded)
+           MESSAGES=nnnnn  (number of User Messages in BRODCAST)
+           EXTRAUSERIDRECS=nn (extra Userid records in BRODCAST
+                               - new Userids / 9)
+           RECORDS=nnnnnn  (total number of records in BRODCAST)
+           TRACKS=nnnn     (total tracks in BRODCAST allocation)
+           CYLINDERS=nnn   (total cylinders in BRODCAST allocation)
+           ----------------------------------------------
+           SYSIN Keywords have to be entered in Column 1.
+           ----------------------------------------------
+
+           The TRACKS=, CYLINDERS=, and RECORDS= keywords
+            are for calculation purposes only, and are not used
+            in determining minimum BRODCAST Dataset size.
+
+           Default SYSIN Values - (if not overridden)
+           ------- ----- ------
+           NOTIFY=125            0000007D
+           USERIDS=1000          000003E8
+           MESSAGES=7000         00001B58
+
+Program Logic:
+------- -----
+
+Checking the JCL for the BRODUMMY DD name...
+
+  After checking for the required DD names of BRODUMMY and SYSIN,
+BDMINIT does a RDJFCB on BRODUMMY (displaying the results in SYSPRINT)
+and checks the following in its JCL:
+
+  1.  Is the allocation in Cylinders?
+  2.  Is the primary allocation 1 cylinder?
+  3.  Is the DSORG=DA?
+  4.  Is the RECFM=F?
+  5.  Is the LRECL=129?
+  6.  Is the BLKSIZE=129?
+  7.  Is the KEYLEN=1?
+
+  If any of these is not true, then BDMINIT issues the appropriate
+message and exits.
+
+Writing dummy records to the BRODUMMY DD name...
+
+  If the BRODUMMY DD name has been correctly allocated, them BDMINIT
+starts writing dummy messages to it, of the appropriate size--the
+same size as real BRODCAST dataset records.  When end-of-track is
+reached, the number of records written is recorded and saved.  When
+end-of-extent is reached, and this must be one cylinder's worth, the
+number of records written is calculated from records per track and
+tracks per cylinder.  These quantities are reported to SYSPRINT after
+they have been saved.
+
+Processing the SYSIN keywords...
+
+  After this, SYSIN is OPENed and READ, and each keyword's quantity
+is processed in order.  A later invocation of the same keyword
+"should" override an earlier invocation of the same keyword, until
+SYSIN records are exhausted.  This is true for the calculations--the
+last value coded is used, but under "SYSIN Quantities Entered", ALL
+of the valid SYSIN values that were entered, are repeated as they
+were coded.  All valid quantities are then saved.  Default values for
+NOTIFY, USERID, and MESSAGES keywords are plugged in, if they haven't
+been coded (see above).
+
+Doing the Calculations...
+
+  Then, once the required SYSIN keyword quantities have been read,
+each quantity coded is treated separately, and the appropriate
+calculations are performed, with the results displayed.  Then,
+based on the NOTIFY, USERIDS, MESSAGES, and EXTRAUSERIDRECS
+keywords, a total minimum number of records is arrived at, and
+allocation recommendations are made.
+
+Creating the New BRODCAST dataset...
+
+  Once the appropriate sizes have been determined, BDMINIT starts
+creating the new BRODCAST dataset.  A header record is written,
+which contains the appropriate information about the relative record
+locations of the other types of records in the BRODCAST dataset.
+
+  The header record contains RBA's (relative record locations) where
+the Global Notify directory will begin, where the Userid records will
+begin, where the Free Search record is, and so forth.  These are
+figured out from the previously calculated quantities.  Then (in
+order) the Notify directory records are created, the blank Notify
+message records are created, the Free Search record is created, the
+Userid records are created as the sum of Userid records calculated,
+and the EXTRAUSERIDRECS= quantity in SYSIN.  Finally, all remaining
+space is filled in with empty User Message records.
+
+  At the end of the operation, the total number of records in the
+BRODCAST dataset is rewritten to the header record.
+
+  We must make a note about Userids.  No actual Userids are loaded
+during this process.  Userids can be either "bulk loaded" later, by
+the BDMULOAD batch program, or they can be added one at a time, by
+the BDMUSADD TSO command.
+
+  People are used to Userids being automatically entered into a new
+BRODCAST dataset by the ACCOUNT and SYNC IBM TSO commands.  We could
+not duplicate this process here, because RACF is not the only security
+product available for MVS systems, and each of the other security
+products has its own way of introducing appropriate Userids into the
+BRODCAST datset.  Therefore, we have a way (using the BDMGTUID and
+BDMULOAD programs) of exporting the Userids from other BRODCAST
+datasets, and combining them together and reloading them.  If you have
+already set up the appropriate batch jobs, this should not be too
+difficult a process to easily carry out.
+
+
+Error Handling:
+----- --------
+
+SYSIN input - If input for any of the admissible keywords is not
+        numeric, then the job is aborted after all SYSIN keywords
+        have been processed, and the characters in error are
+        replaced by an asterisk (*) as follows:
+
+      For example:  input - //SYSIN    DD  *
+                            TRACKS=£48
+                            RECORDS=10§46
+                            CYLINDERS=110
+                            USERIDS=4234
+                            USERIDS=863¥
+                            MESSAGES=34978
+
+                    is reported as:
+
+                TRACKS=    Decimal:  *48     INVALID NUMERIC
+                RECORDS=   Decimal:  10*46   INVALID NUMERIC
+                CYLINDERS= Decimal:  110
+                USERIDS=   Decimal:  4234
+                USERIDS=   Decimal:  863*    INVALID NUMERIC
+                MESSAGES=  Decimal:  34978
+
+      If any invalid numeric characters have been coded, processing
+      is stopped, and the user is instructed to correct the errors
+      and resubmit the job.
+
+Not enough allocated PRIMARY space in BRODCOUT -
+
+      If the PRIMARY space allocation in the BRODCOUT DD name is
+      insufficient to contain the number of records calculated by
+      BDMINIT from the SYSIN cards and defaults, then BDMINIT will
+      report the problem, recommend the minimum PRIMARY space
+      allocation in both tracks and cylinders, and will stop.  To
+      rerun BDMINIT, you have to delete the BRODCOUT dataset
+      already created, first.  Then use a larger PRIMARY space
+      allocation, and rerun the BDMINIT job.
+
+

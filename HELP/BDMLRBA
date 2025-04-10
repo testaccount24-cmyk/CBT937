@@ -1,0 +1,16 @@
+---   BDMLRBA PROGRAM   -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+ BDMLIST -   List SOME, or ALL of the User Messages belonging
+             to a given Userid which is defined in the BRODCAST
+             Dataset.
+
+ BDMLRBA -   Same as BDMLIST, except that the RBA of each User
+             Message is printed before the User Message itself,
+             similarly to the way BDMDEL shows the RBA of each
+             message deleted.  Therefore BDMLRBA can be used
+             for diagnosis purposes.
+
+Please refer to the BDMLIST command for information about BDMLRBA.
+

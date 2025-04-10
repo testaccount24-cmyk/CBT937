@@ -1,0 +1,91 @@
+---   BDMDSFIX PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+ BDMDSFIX -  Fix a Broadcast Dataset which was copied from a 3380
+             disk to a 3390 disk.  Or fix any Broadcast Dataset
+             which has a certain error in a free message record.
+             The error is as follows:  A free message record in
+             the Broadcast Dataset has its one-byte key equal to
+             X'FF'.  The first data byte in that record, following
+             the key, has to be equal to the "R" (or the record
+             number on the track) in the "TTR".  If the first data
+             byte is not the "R" of the TTR of the record, havoc
+             follows.  This program fixes the first data byte value
+             of all X'FF' records in the Broadcast Dataset to the
+             "R" value of that record's TTR.
+
+Execution Mode:   TSO Command - using the PUTLINE interface
+--------- ----
+
+Description of Operation:
+----------- -- ---------
+
+  The BDMDSFIX program fixes the first byte of all X'FF' records
+(free message records) to have a value of the "R" in the TTR of
+that record.  This value is necessary for the Broadcast Dataset
+to function properly.  When you copy a Broadcast Dataset to a disk
+of different geometry, the "R" value in the first byte of the free
+message records can get messed up.
+
+  For example, a 3380 pack can hold 53 Broadcast records on a track,
+which is X'35'.  A 3390 pack can only hold 50 Broadcast records to
+a track.  Thus on a 3390 an X'FF' record can't contain a value in
+its first data byte bigger than X'32'.  But if the dataset was copied
+from a 3380 device, there might be larger values in the first data
+byte of the X'FF' records.  All of the first bytes in error, have to
+be fixed.
+
+  The program works by reading all Broadcast records in order,
+determining the "R" value of each record as we go.  If the "R" number
+that was there, is different from what it should be, it is changed.
+Otherwise, it is left the same, since that value is correct.
+
+
+JCL Requirements or TSO Allocations:
+--- ------------ -- --- -----------
+
+  The BDMDSFIX program is a TSO command, but it uses the PUTLINE
+interface to write its output to the terminal.  Therefore you can
+run the BDMDSFIX program under TSO-in-batch, and still see its
+output.  You can (of course) also run BDMDSFIX as a TSO command.
+
+Allocation Requirement -
+
+  The particular copy of the BRODCAST dataset which you want to look
+at for bad X'FF' records, must be pointed to by the BRODCAST DD name,
+as follows:
+
+ALLOC FI(BRODCAST) DA(your.BRODCAST.dataset) SH REUSE
+
+or
+
+//BRODCAST  DD  DISP=SHR,DSN=your.BRODCAST.dataset
+
+
+Subcommands:   (none)
+-----------
+            INSTRUCTIONS FOR BDMDSFIX TSO COMMAND
+            ------------ --- ------ --- -------
+
+         BDMDSFIX  -  Valid Execution Parms are :   none
+
+Report:
+------
+
+  Here is a sample output for BDMDSFIX REPORT :
+
+BDMDSFIX PROGRAM  -  Broadcast Master  Version   1.5.0A
+Copyright (c) 1995-2025 Sam Golob Systems Programming  LLC - All Rights Reserved
+
+ BRODCAST Dataset Name  :     SYS1.BRODCAST
+ BRODCAST Dataset Volser:     MVSRES
+
+          This BRODCAST Dataset IS IN USE by the system.
+
+Fix free message records that are in error.
+--- ---- ------- ------- ---- --- -- -----
+Records    changed by BDMDSFIX program:         0
+Total free records in BRODCAST dataset:      1388
+
+

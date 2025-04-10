@@ -1,0 +1,198 @@
+---   BDMXPORT PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+ BDMXPORT -  Export SOME, or ALL of the User Messages belonging
+             to a given Userid which is defined in the BRODCAST
+             Dataset, to a VB-255 format file, in BDMSEND format.
+             This allows that file to be executed as a CLIST, so
+             the messages can be reloaded into a BRODCAST Dataset.
+
+
+Execution Mode:   TSO Command - using the PUTLINE interface
+--------- ----
+
+Description of Operation:
+----------- -- ---------
+
+  The BDMXPORT program is used to EXPORT all, or some, of the User
+Messages which belong to a given Userid.  This is done by accessing
+the Userid Record in the Userid Directory, and starting from the
+beginning Userid Message in the chain, running through the chain and
+printing all the records in the chain.  As this is done, the messages
+are written out to a Variable Blocked file of Record Length = 255.
+
+  There is also a special Userid designation which means to dump the
+outstanding messages for ALL Userids.  This special Userid is ALL$#@.
+
+  So BDMXPORT ALL$#@ will export all outstanding messages in the
+BRODCAST Dataset, for all Userids which have messages attached to them.
+
+
+JCL Requirements or TSO Allocations:
+--- ------------ -- --- -----------
+
+  The BDMXPORT program is a TSO command, but it uses the PUTLINE
+interface to write its output to the terminal.  Therefore you can
+run the BDMXPORT program under TSO-in-batch, and still see its
+output.  You can (of course) also run BDMXPORT as a TSO command.
+And you can capture the outputs using the TSOE, TSOB, or TSOV REXXes
+that are in the CLIST library (from Mark Zelden).
+
+Allocation Requirement -
+
+  The particular copy of the BRODCAST dataset which you want to
+look at, must be pointed to by the BRODCAST DD name, as follows:
+
+ALLOC FI(BRODCAST) DA(your.BRODCAST.dataset) SH REUSE
+
+or
+
+//BRODCAST  DD  DISP=SHR,DSN=your.BRODCAST.dataset
+
+  You must also define a Variable Blocked File with an LRECL of 255
+to receive the Exported Records, as output of the BDMXPORT command.
+
+ALLOC F(EXPORT) DA(EXPORT.DATA) SPACE(5 45) TRACKS RECFM(V B) -
+    LRECL(255) UNIT(SYSDA) REUSE
+
+or
+
+//EXPORT    DD  DISP=SHR,DSN=your.EXPORT.dataset,
+//              DCB=(DSORG=PS,RECFM=VB,LRECL=255,BLKSIZE=6000),
+//              UNIT=SYSALLDA,SPACE=(TRK,(5,45),RLSE)
+
+
+Subcommands:
+-----------
+            INSTRUCTIONS FOR BDMXPORT TSO COMMAND
+            ------------ --- ------ --- -------
+      BDMXPORT userid                      - List all messages
+                                             for one userid.
+      BDMXPORT userid SKIP(mm)  MSGS(nn)   - List nn messages
+                                             for one userid, after
+                                             skipping the first mm
+                                             messages.
+      BDMXPORT ALL$#@                      - List all messages
+                                             for all userids defined
+                                             in the BRODCAST dataset.
+
+Report:
+------
+
+  Here is what you see if Userid USR0001 has 1875 outstanding messages,
+  but we just issue:  BDMXPORT USR0001 SKIP(50) MSGS(15)
+
+BDMXPORT PROGRAM  -  Broadcast Master  Version   1.5.0A
+Copyright (c) 1995-2025 Sam Golob Systems Programming  LLC - All Rights Reserved
+
+Number of MSGS to Skip          50
+Limit  of MSGS to List          15
+          BDMXPORT Broadcast Master  Version   1.5.0A
+          -------  --------- ------  -------   -----
+       Copyright (c) 1995-2025 Sam Golob Systems Programming
+
+        /*  Messages for USERID:  USR0001       */
+07:20/05.229 EWH35DW    ENDED; GENER2 RC0000  CN(INTERNAL)
+07:20/05.229 EWH35UA    ENDED; GENER2 RC0000  CN(INTERNAL)
+07:20/05.229 EWH35DW    ENDED; GENER2 RC0000  CN(INTERNAL)
+07:20/05.229 EWH35UA    ENDED; GENER2 RC0000  CN(INTERNAL)
+07:20/05.229 EWH35DW    ENDED; GENER2 RC0000  CN(INTERNAL)
+07:20/05.229 EWH35DW    ENDED; GENER2 RC0000  CN(INTERNAL)
+07:20/05.229 EWH35DW    ENDED; GENER2 RC0000  CN(INTERNAL)
+07:21/05.229 EWH35DW    ENDED; GENER2 RC0000  CN(INTERNAL)
+07:21/05.229 EWH35DW    ENDED; GENER2 RC0000  CN(INTERNAL)
+07:30/05.229 EWH35FT    ENDED; GENER2 RC0000  CN(INTERNAL)
+07:30/05.229 EWH35HT    ENDED; GENER2 RC0000  CN(INTERNAL)
+07:30/05.229 EWH35HN    ENDED; GENER2 RC0000  CN(INTERNAL)
+07:30/05.229 EWH35HR    ENDED; GENER2 RC0000  CN(INTERNAL)
+07:59/05.229 EWH35UA    ENDED; GENER2 RC0000  CN(INTERNAL)
+07:59/05.229 EWH35UA    ENDED; GENER2 RC0000  CN(INTERNAL)
+USER USR0001 HAS    1875   DEFERRED TSO MESSAGES
+* - - - - END OF MESSAGES FOR THIS USER - - - - *
+
+And the output file looks like the following:
+
+BDMSEND USR0001 07:20/05.229 EWH35DW    ENDED; GENER2 RC0000  CN(INTERNAL)
+BDMSEND USR0001 07:20/05.229 EWH35UA    ENDED; GENER2 RC0000  CN(INTERNAL)
+BDMSEND USR0001 07:20/05.229 EWH35DW    ENDED; GENER2 RC0000  CN(INTERNAL)
+BDMSEND USR0001 07:20/05.229 EWH35UA    ENDED; GENER2 RC0000  CN(INTERNAL)
+BDMSEND USR0001 07:20/05.229 EWH35DW    ENDED; GENER2 RC0000  CN(INTERNAL)
+BDMSEND USR0001 07:20/05.229 EWH35DW    ENDED; GENER2 RC0000  CN(INTERNAL)
+BDMSEND USR0001 07:20/05.229 EWH35DW    ENDED; GENER2 RC0000  CN(INTERNAL)
+BDMSEND USR0001 07:21/05.229 EWH35DW    ENDED; GENER2 RC0000  CN(INTERNAL)
+BDMSEND USR0001 07:21/05.229 EWH35DW    ENDED; GENER2 RC0000  CN(INTERNAL)
+BDMSEND USR0001 07:30/05.229 EWH35FT    ENDED; GENER2 RC0000  CN(INTERNAL)
+BDMSEND USR0001 07:30/05.229 EWH35HT    ENDED; GENER2 RC0000  CN(INTERNAL)
+BDMSEND USR0001 07:30/05.229 EWH35HN    ENDED; GENER2 RC0000  CN(INTERNAL)
+BDMSEND USR0001 07:30/05.229 EWH35HR    ENDED; GENER2 RC0000  CN(INTERNAL)
+BDMSEND USR0001 07:59/05.229 EWH35UA    ENDED; GENER2 RC0000  CN(INTERNAL)
+BDMSEND USR0001 07:59/05.229 EWH35UA    ENDED; GENER2 RC0000  CN(INTERNAL)
+
+---------------------------------------------------------------
+
+Program Logic:
+------- -----
+
+  The basic principles of the program logic were mentioned above,
+in the "Description of Operation" section.
+
+Error Handling:
+----- --------
+
+  BDMXPORT checks the entered Userid (the first positional keyword)
+and runs the chain of Userid records to see if this Userid is there.
+If it is not, the following report is issued:
+
+BDMXPORT PROGRAM  -  Broadcast Master  Version   1.5.0A
+Copyright (c) 1995-2025 Sam Golob Systems Programming  LLC - All Rights Reserved
+
+          BDMXPORT Broadcast Master  Version   1.5.0A
+          -------  --------- ------  -------   -----
+       Copyright (c) 1995-2025 Sam Golob Systems Programming
+
+* - - NO USERID RECORD FOR USER USR0002  - - *
+
+* ----------------------------------------------------------------- *
+
+  If the BRODCAST DD allocation is missing, then BDMXPORT issues
+the following message:
+
+ IEC130I BRODCAST DD STATEMENT MISSING
+        Bad Open - ALLOC F(BRODCAST) DA(SYS1.BRODCAST) SH REU
+
+* ----------------------------------------------------------------- *
+
+  If the EXPORT DD allocation is missing, then BDMXPORT issues
+the following message:
+
+ IEC130I EXPORT   DD STATEMENT MISSING
+     BAD OPEN - ALLOC F(EXPORT) DA(EXPORT.DATA) SPACE(5 45) TRACKS RECFM(V B) -
+          LRECL(255) UNIT(SYSDA) REUSE
+
+* ----------------------------------------------------------------- *
+
+  If no userid was entered after the BDMXPORT command then BDMXPORT
+returns the reply:
+
+        PLEASE ENTER THE USERID NAME AFTER COMMAND NAME
+
+* ----------------------------------------------------------------- *
+
+  If the values entered into the SKIP(mm) or MSGS(nn) are not
+numeric, then the non-numeric character entered is replaced by
+an asterisk (to make the error more visible), and the following
+messages are displayed:
+
+BDMXPORT PROGRAM  -  Broadcast Master  Version   1.5.0A
+Copyright (c) 1995-2025 Sam Golob Systems Programming  LLC - All Rights Reserved
+
+Number of MSGS to Skip    *888*4       Non-Numeric
+Limit  of MSGS to List    *99*6        Non-Numeric
+
+MSGS or SKIP keyword values were non-numeric.
+No User Messages have been listed.
+  ---------------
+  Return Code = 8
+  ---------------
+

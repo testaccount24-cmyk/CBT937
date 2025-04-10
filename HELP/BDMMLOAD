@@ -1,0 +1,304 @@
+---   BDMMLOAD PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+
+ BDMMLOAD -  Bulk User Message Loader program.  BDMMLOAD is intended
+             to very quickly load User Messages dumped from another
+             BRODCAST Dataset by the BDMGTMSG program, into a newly
+             initialized BRODCAST Dataset that was created with the
+             BDMINIT program.
+
+
+Execution Mode:   Batch Program
+--------- ----
+
+Description of Operation:
+----------- -- ---------
+
+  BDMMLOAD is a very quick message reloader.  The speed is achieved
+  by means of thorough pre-analysis of the BDMMDUMP dataset, and of
+  the BRODCAST Dataset where the messages will be loaded.
+
+
+JCL Requirements:
+--- ------------
+
+  Required DD names -
+  -------- -- -----
+
+BRODCAST - This is the BRODCAST Dataset whose Userids are being
+           dumped.
+
+      Sample JCL definition for the BRODCAST dataset.
+
+  //BRODCAST DD DISP=SHR,DSN=SBGOLOB.NEW.BRODCAST
+
+BDMMDUMP - This is the dump of all messages from the old BRODCAST
+           Dataset, which was produced by the BDMGTMSG program.
+
+  //BDMMDUMP DD DISP=SHR,DSN=SBGOLOB.OLD.MSGDUMP
+
+
+Work Files:
+
+  There are three work files necessary to be allocated:
+
+            LRECL   PURPOSE
+            -----   -------
+BDMMREAD -   12     All Userids to be loaded, and number of messages
+                    associated with each of them (in BINARY fullword).
+
+BDMUIDWK -   17     All Userids in the BRODCAST Dataset to be loaded.
+                    together with the starting and ending RBA of their
+                    messages, and the RBA and slot of their BRODCAST
+                    Datatset records.  (Copied to Incore Table later).
+
+BDMFRMAP -    7     Map of Free Userid Records in the entire BRODCAST
+                    Dataset.  Key X'FF' together with this record's
+                    RBA, and the next free record's RBA.
+
+  You can code the JCL for these three work files as follows:
+
+//* ------  WORK FILES - BELOW ------- *
+//BDMMREAD DD DISP=(NEW,PASS),
+//            DSN=&&MREAD,UNIT=SYSALLDA,
+//            DCB=(DSORG=PS,RECFM=FB,BLKSIZE=12000,LRECL=12),
+//            SPACE=(TRK,(5,5),RLSE)
+//BDMUIDWK DD DISP=(NEW,PASS),
+//            DSN=&&UIDWK,UNIT=SYSALLDA,
+//            DCB=(DSORG=PS,RECFM=FB,BLKSIZE=17000,LRECL=17),
+//            SPACE=(TRK,(5,5),RLSE)
+//BDMFRMAP DD DISP=(NEW,PASS),
+//            DSN=&&FRMAP,UNIT=SYSALLDA,
+//            DCB=(DSORG=PS,RECFM=FB,BLKSIZE=7000,LRECL=7),
+//            SPACE=(TRK,(5,5),RLSE)
+//* ------  WORK FILES - ABOVE ------- *
+
+SYSPRINT - A SYSOUT DD name which contains the report showing
+           everything that was done in the message loading process
+           and its preliminary preparations.  Parts of a sample
+           report follow:
+
+  Sample Report
+  ------ ------
+
+ ---   BDMMLOAD PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+ Copyright (c) 1995-2025 Sam Golob Systems Programming LLC - All Rights Reserved
+         -  BDMMLOAD Program  -  Message Bulk Loader Program  -
+
+    BDMMDUMP Properties
+    -------- ----------
+      DSNAME  = SBGOLOB.NEW.MSGDUMP
+      MEMBER  =
+      VOLSER  = WORK03
+      DSORG   = PS
+      RECFM   = FB
+      LRECL   =        130
+      BLKSIZE =      27950
+
+    BDMMDUMP Analysis
+    -------- --------
+    Number  of Userids   in BDMMDUMP:         49
+    Total # of Messages  in BDMMDUMP:       3114
+
+    BRODCAST Properties
+    -------- ----------
+      DSNAME  = SBGOLOB.NEW.BRODCAST
+      MEMBER  =
+      VOLSER  = WORK04
+      DSORG   = DA
+      RECFM   = F
+      LRECL   =        129
+      BLKSIZE =        129
+
+    BRODCAST Analysis
+    -------- --------
+    Free Message Records in BRODCAST:       9039
+    User Messages Found  in BRODCAST:          0
+    Free Message Mapping Table Loaded:-->
+    Total # of Userids   in BRODCAST:       3855
+
+    Userid Table Entries Loaded - Count:    3855
+
+
+    Preliminary Userid Scan
+    ----------- ------ ----
+    Userid UID0001 has         37 eligible messages.
+    Userid UID0002 has       1875 eligible messages.
+    Userid UID0003 has        256 eligible messages.
+    Userid UID0004 has          1 eligible messages.
+      *  *  *  *  *  *  *  *
+    Userid UID0044 has         27 eligible messages.
+    Userid UID0045 has        111 eligible messages.
+    Userid UID0046 has          3 eligible messages.
+    Userid UID0047 has         27 eligible messages.
+    Userid UID0048 has          3 eligible messages.
+    Userid UID0049 has          6 eligible messages.
+    Number of messages eligible to load:       3114
+
+    Loading Userids Now
+    ------- ------- ---
+    Userid :  UID0001
+            37  Messages Loaded for Userid UID0001
+    Userid :  UID0002
+          1875  Messages Loaded for Userid UID0002
+    Userid :  UID0003
+           256  Messages Loaded for Userid UID0003
+    Userid :  UID0004
+             1  Messages Loaded for Userid UID0004
+      *  *  *  *  *  *  *  *
+    Userid :  UID0044
+            27  Messages Loaded for Userid UID0044
+    Userid :  UID0045
+           111  Messages Loaded for Userid UID0045
+    Userid :  UID0046
+             3  Messages Loaded for Userid UID0046
+    Userid :  UID0047
+            27  Messages Loaded for Userid UID0047
+    Userid :  UID0048
+             3  Messages Loaded for Userid UID0048
+    Userid :  UID0049
+             6  Messages Loaded for Userid UID0049
+
+       -------  -------- ---- ---- ------ ---- --- -------- -------
+          3114  Messages have been loaded into the BRODCAST dataset.
+       -------  -------- ---- ---- ------ ---- --- -------- -------
+
+         ---------------
+         Return Code = 0
+         ---------------
+
+
+Program Logic
+------- -----
+
+  The Messages that were dumped and which are in the BDMMDUMP file,
+are classified under their respective userids in the following form:
+
+./--- UID0001
+   message content, etc.
+   message content, etc.
+./--- UID0002
+   message content, etc.
+   message content, etc.
+  .  .  .  .  .  .  .  .  .  and so forth for all the Userids dumped.
+
+To figure out how to load these messages into a new BRODCAST Dataset,
+the following steps are taken:
+
+1.  Read through the entire BDMMDUMP file sequentially, and create
+    the BDMMREAD work file, containing each Userid and the number
+    of messages under it.
+
+2.  Run through all the Userids in the target BRODCAST Dataset and
+    create the BDMUIDWK work file, containing the locations of each
+    Userid record, and whether (or not) it already contains messages.
+    Create an incore copy of the UIDWK file.
+
+3.  Read the entire target BRODCAST Dataset in sequential order from
+    the beginning, and produce a Free Space map containing all empty
+    Free Message records, each one's own RBA, and the next Free
+    record's RBA.
+
+With this preparation, a preliminary scan is done to determing which
+Userids in the BDMMDUMP file have corresponding Userids in the target
+BRODCAST Dataset.  If the Userid in the target BRODCAST Dataset
+already has messages, then no messages are eligible to be further
+loaded, because at this point, we don't want to make any decisions
+about whether new messages should go after (or before) old ones, etc.
+All eligible messages from all eligible Userids are then totaled and
+compared to the total number of free Message records.  If there is
+enough room to write the eligible messages, then the message loading
+process proceeds.
+
+All User messages for each Userid are then written into all the Free
+Space record RBA's directly, in one WRITE.  The chaining is automatic,
+because the BDMFRMAP record also contains the next Free Record's RBA.
+Then after each Userid's messages have been loaded, the Userid record
+from the BDMUIDWK file is looked up, and that Userid's slot is updated
+with the correct Beginning and Ending RBA for that Userid.  Finally
+the Free Search Record is properly updated.  Then we go to the next
+Userid in the BDMMDUMP file, until all Userids which are eligible,
+have had all their messages loaded into the new BRODCAST Dataset.
+
+All messages for one Userid are loaded in ascending RBA order, because
+the loading goes according to the Free Space Map.  Therefore, loading
+the messages using BDMMLOAD has a "reorg-ing" effect, to condense the
+reloaded messages into the smallest possible space.
+
+
+Error Handling:
+----- --------
+
+  DD Name Protection
+  -- ---- ----------
+
+  If there are any missing DD names from the JCL, the program informs
+you of the situation, provided that the SYSPRINT DD is present.  In
+such a case, you will see any or all of the following messages in the
+SYSPRINT report:
+
+ ---   BDMMLOAD PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+ Copyright (c) 1995-2025 Sam Golob Systems Programming LLC - All Rights Reserved
+         -  BDMMLOAD Program  -  Message Bulk Loader Program  -
+
+BDMML01E   ---  BRODCAST DD Name Missing  ---
+BDMML01E   ---  BDMMDUMP DD Name Missing  ---
+BDMML01E   ---  BDMMREAD DD Name Missing  ---
+BDMML01E   ---  BDMUIDWK DD Name Missing  ---
+BDMML01E   ---  BDMFRMAP DD Name Missing  ---
+
+BDMML05E   ***  Please correct your JCL   ***
+
+  If SYSPRINT is present a Return Code of 12 is issued.
+
+  If SYSPRINT is NOT present, then messages about the missing DD Names
+are written to the JOB LOG, as follows (as many messages as apply):
+
+ BDMML00I     ----------------------------
+ BDMML10E     SYSPRINT DD Name is missing...
+ BDMML00I     ----------------------------
+ BDMML10E     BDMMDUMP DD Name is missing...
+ BDMML00I     ----------------------------
+ BDMML10E     BRODCAST DD Name is missing...
+ BDMML00I     ----------------------------
+ BDMML10E     BDMMREAD DD Name is missing...
+ BDMML00I     ----------------------------
+ BDMML10E     BDMUIDWK DD Name is missing...
+ BDMML00I     ----------------------------
+ BDMML10E     BDMFRMAP DD Name is missing...
+ BDMML00I     ----------------------------
+ IEF142I SBGOLOBD BDMMLOAD - STEP WAS EXECUTED - COND CODE 0016
+
+  If SYSPRINT is not present, a Return Code of 16 is issued, to
+indicate the extra severity.
+
+ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  Return Codes and their Relevant Circumstances
+  ------ ----- --- ----- -------- -------------
+
+Return Code = 4 :
+
+  The Preliminary Scan determined that no messages from BDMMDUMP
+  were eligible to be loaded.
+
+
+Return Code = 8 :
+
+  The Preliminary Scan determined that there were not enough Free
+  Message Records in the BRODCAST Dataset to accommodate the number
+  of eligible messages to be loaded.
+
+
+Return Code = 12 :
+
+  Missing DD Names, but the SYSPRINT DD is present.
+
+
+Return Code = 16 :
+
+  Missing DD Names, and the SYSPRINT DD is absent.
+
+

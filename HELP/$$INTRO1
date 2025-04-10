@@ -1,0 +1,160 @@
+
+          ---   Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+               Introduction to the BRODCAST Dataset
+               ------------ -- --- -------- -------
+
+      Ever since the MVT days, and certainly since MVS came out in
+1975, the SYS1.BRODCAST dataset was one of the necessities for MVS to
+IPL.  In fact, only a few years ago, during the z/OS 1.6 era, a PTF was
+finally written to allow MVS to IPL without the presence of a BRODCAST
+dataset.  For all its "necessity", the BRODCAST Dataset does not seem
+to serve such an essential purpose.  It is a messaging device, attached
+to the TSO component of MVS, and its function is to store messages from
+either the system, or from another TSO user, to a TSO user.
+
+      Until recently, the BRODCAST Dataset had to be called
+SYS1.BRODCAST, and it had to be cataloged in the Master Catalog as
+such.  Now, at least after TSO/E Release 3 (introduced with z/OS 1.3),
+there is such a thing as Brodcast Dataset switching, with a Brodcast
+Dataset able to have any name, and it does not have to be cataloged,
+its volume serial being written in the IKJTSOxx PARMLIB member.  So
+instead of calling the dataset SYS1.BRODCAST, since it can now have
+any name, we will always call it the BRODCAST Dataset in our
+discussions here.
+
+
+Structure of the BRODCAST Dataset
+
+      The BRODCAST Dataset is a "Direct Access" dataset, or DSORG=DA.
+It has a one-byte key at the beginning of each record, and 129 bytes of
+data.  The data is unblocked, and each record is the same size, so that
+RECFM=F.  The BRODCAST Dataset contains 7 types of data, each type
+determined by the value of the key.  Six of these types are mapped by
+macros, called IKJZT301 thru IKJZT306.  In former times, these macros
+were not distributed in SYS1.MACLIB as they are now.  But they were in
+the "Optional Materials" tapes, or in SYS1.PVTMACS (if you really go
+back that far).  The following table illustrates each type of record in
+the BRODCAST Dataset:
+
+  KEY    MAPPING MACRO      FUNCTION OF RECORD
+
+  X'04'   IKJZT301       BRODCAST Dataset Header Record
+  X'00'   IKJZT302       BRODCAST Dataset Notices Directory Record
+  X'02'   IKJZT303       BRODCAST Dataset Notices Message Record
+  X'05'   IKJZT306       BRODCAST Dataset Free Search Record
+  X'01'   IKJZT304       BRODCAST Dataset USERID Records
+  X'03'   IKJZT305       BRODCAST Dataset Used Userid Message Record
+  X'FF'   N.A.           BRODCAST Dataset Free User Message Record
+
+      The "Broadcast Master" package from Sam Golob Systems Programming
+LLC, contains tools to manipulate and administer the BRODCAST Dataset,
+accessing and manipulating all of these record types.
+
+
+ENQUEUES:
+
+      IBM's tools for accessing the BRODCAST Dataset are mostly:
+
+The TSO SEND command, which sends user messages on behalf of one TSO
+    user, to itself or to another TSO user.
+
+The TSO LISTBC command, which shows the current TSO user both the
+    Global Notices messages (indirectly) from the BRODCAST Dataset,
+    and also that user's own messages.  After showing the user his
+    (or her) own messages, LISTBC deletes them from the BRODCAST
+    dataset.
+
+      In order for two TSO users not to interfere with each other,
+when attempting to write to the BRODCAST Dataset, IBM has provided
+enqueue protection to stop one user, while the other user is working.
+These enqueues are:
+
+    QNAME          RNAME                                  SCOPE
+    -----          -----                                  -----
+
+   SYSIKJBC      X'nnnnnn'   where nnnnnn is the          SYSTEM
+                             Relative Record Address
+                             of a particular BRODCAST
+                             Dataset Record.  Often,
+                             the Header Record,
+                             X'000000' is enqueued
+                             upon, because you always
+                             need the Header to find
+                             another thing, like to
+                             run a Userid Message chain
+                             or to update the Free
+                             Search Record.
+
+      Programs in the Broadcast Master package will issue these
+enqueues when attempting to write to a BRODCAST Dataset which is
+being used by the system.
+
+
+DISPLAYING THE STATUS OF TSO CONTROL BLOCKS:
+
+      Especially since TSO/E Release 3.x.x, which came out initially
+with z/OS 1.3, the active BRODCAST Dataset can have any name, and you
+can switch from one copy of the BRODCAST Dataset to another, as the
+"ACTIVE" BRODCAST Dataset.  The active BRODCAST Dataset can optionally
+be specified in an IKJTSOxx member of PARMLIB, and you can "switch" to
+that member, by means of either:
+
+   1.  An IPL
+   2.  The PARMLIB UPDATE(xx)    TSO command
+   3.  The SET IKJTSO=xx         Console Operator command
+
+      The Broadcast Master package supplies a Public Domain TSO command
+called EESCB, in the FREELOAD library distributed with the package.
+The EESCB command, which uses the PUTLINE interface and which can
+therefore be run under TSO-in-batch, will display just about ALL the
+relevant control block information that has to do with the ACTIVE
+BRODCAST Dataset.
+
+      Note:  The EESCB TSO command was written by Sam Golob while this
+package was being developed, but it was donated to the Public Domain,
+and anybody can use it.  It is being distributed here in the FREELOAD
+library, because it helps very materially, in the active administration
+of the BRODCAST Dataset.
+
+      Second Note:  In the CLIST library that comes with this package,
+there are three TSO REXXes which execute other TSO commands and trap
+their output, displaying it under ISPF Browse, View, or Edit.  These
+are called TSOB, TSOV, and TSOE.  They come from Mark Zelden and are
+in the Public Domain.  Since the TSO commands in this package all use
+the PUTLINE terminal display interface (as opposed to TPUT), they can
+be trapped by the SYSOUTTRAP service, and therefore displayed by TSOB,
+TSOE, or TSOV for your viewing pleasure.
+
+      Third Note:  In order to properly browse a BRODCAST Dataset,
+you need the Public Domain REVIEW command from Greg Price and Bill
+Godfrey (originally), which is included in the FREELOAD library.  The
+reason for this is that BRODCAST is a keyed dataset with Key Length
+equal to 1.  When ISPF Browse looks at it, since the LRECL is 129 and
+not 130, the key byte is included, but the last data byte is dropped
+off.  And it is very important for us to see the last data byte,
+because that is where the Userid records are chained to each other,
+and where the User Message records for each Userid are chained to each
+other.  Also the Global Notify Directory records are chained to each
+other there, too.  So you must see the last 3 bytes of the BRODCAST
+Dataset records and you have to use the REVIEW program, to
+conveniently do so.  Please copy the programs in the FREELOAD library
+to a load library that is accessible to your TSO session.  They DO
+NOT need to be APF authorized.
+
+      To REVIEW a BRODCAST Dataset, you just issue the TSO command
+from a TSO Session:
+
+   REVIEW brodcast.dataset.name
+
+      A REXX exec called TSOR was adapted from Mark Zelden's TSOE and
+TSOB, to REVIEW the trapped output of a TSO command, and this also
+works in TSO Ready mode.  (In other words from Ready, you can issue
+TSOR EESCB and you can REVIEW the trapped output and scroll up and
+down.)
+
+      Please continue with member $$INTRO2.
+
+

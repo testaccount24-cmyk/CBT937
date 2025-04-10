@@ -1,0 +1,203 @@
+---   BDMUSERS PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+ BDMUSERS -  List all Userids having outstanding User Messages.
+
+             Show all defined Userids in the BRODCAST Dataset.
+
+
+Execution Mode:   TSO Command - using the PUTLINE interface
+--------- ----
+
+Description of Operation:
+----------- -- ---------
+
+  The BDMUSERS program is used to LIST all Userids having
+outstanding User Messages attached to them.  A second function is
+the BDMUSERS A(LL) listing, which shows all Userids defined in the
+BRODCAST Dataset, and the location of their Userid record slots,
+within the BRODCAST Dataset.
+
+
+JCL Requirements or TSO Allocations:
+--- ------------ -- --- -----------
+
+  The BDMUSERS program is a TSO command, but it uses the PUTLINE
+interface to write its output to the terminal.  Therefore you can
+run the BDMUSERS program under TSO-in-batch, and still see its
+output.  You can (of course) also run BDMUSERS as a TSO command.
+
+Allocation Requirement -
+
+  The particular copy of the BRODCAST dataset which you want to
+look at, must be pointed to by the BRODCAST DD name, as follows:
+
+ALLOC FI(BRODCAST) DA(your.BRODCAST.dataset) SH REUSE
+
+or
+
+//BRODCAST  DD  DISP=SHR,DSN=your.BRODCAST.dataset
+
+
+Subcommands:
+-----------
+
+---------------------------------------------------------------
+
+  The BDMUSERS program is the basic utility in the Broadcast Master
+Package, which will show you which Userids have outstanding User
+Messages attached to them.  It is used as follows:
+
+---------------------------------------------------------------
+
+            INSTRUCTIONS FOR BDMUSERS TSO COMMAND
+            ------------ --- ------ --- -------
+
+      BDMUSERS               - List all Userids having outstanding
+                               User Messages attached to them, and
+                               how many messages for each Userid.
+
+      BDMUSERS A             - List all Userids defined to the
+      BDMUSERS ALL             BRODCAST Dataset, with special
+                               listings for those Userids with
+                               User Messages attached to them.
+
+Report:
+------
+
+  Here is what you see if you point the BRODCAST DD name to a given
+  BRODCAST Dataset, and we issue:  BDMUSERS
+
+BDMUSERS PROGRAM  -  Broadcast Master  Version   1.5.0A
+Copyright (c) 1995-2025 Sam Golob Systems Programming  LLC - All Rights Reserved
+
+       User USER001 has      37   Deferred TSO Messages
+       User USER002 has    1875   Deferred TSO Messages
+       User USER003 has     256   Deferred TSO Messages
+       User USER004 has       1   Deferred TSO Messages
+       User USER005 has       4   Deferred TSO Messages
+       User USER006 has       5   Deferred TSO Messages
+       User USER007 has       1   Deferred TSO Messages
+       User USER008 has      17   Deferred TSO Messages
+       User USER009 has      28   Deferred TSO Messages
+       User USER010 has      38   Deferred TSO Messages
+       User USER011 has       6   Deferred TSO Messages
+       User USER012 has       4   Deferred TSO Messages
+       User USER013 has       4   Deferred TSO Messages
+       User USER014 has       8   Deferred TSO Messages
+       User USER015 has       6   Deferred TSO Messages
+       User USER016 has       1   Deferred TSO Messages
+       User USER017 has       3   Deferred TSO Messages
+       User USER018 has       1   Deferred TSO Messages
+       User USER019 has     136   Deferred TSO Messages
+       User USER020 has      24   Deferred TSO Messages
+       User USER021 has       1   Deferred TSO Messages
+       User USER022 has      11   Deferred TSO Messages
+       User USER023 has       4   Deferred TSO Messages
+       User USER024 has       1   Deferred TSO Messages
+       User USER025 has       2   Deferred TSO Messages
+       User USER026 has       1   Deferred TSO Messages
+       User USER027 has       8   Deferred TSO Messages
+       User USER028 has      58   Deferred TSO Messages
+       User USER029 has      78   Deferred TSO Messages
+       User USER030 has       1   Deferred TSO Messages
+       User USER031 has       1   Deferred TSO Messages
+       User USER032 has       2   Deferred TSO Messages
+       User USER033 has      17   Deferred TSO Messages
+       User USER034 has      35   Deferred TSO Messages
+       User USER035 has       4   Deferred TSO Messages
+       User USER036 has      25   Deferred TSO Messages
+       User USER037 has       2   Deferred TSO Messages
+       User USER038 has       3   Deferred TSO Messages
+       User USER039 has       7   Deferred TSO Messages
+       User USER040 has     174   Deferred TSO Messages
+       User USER041 has       3   Deferred TSO Messages
+       User USER042 has      41   Deferred TSO Messages
+       User USER043 has      27   Deferred TSO Messages
+       User USER044 has     111   Deferred TSO Messages
+       User USER045 has       3   Deferred TSO Messages
+       User USER046 has      27   Deferred TSO Messages
+       User USER047 has       3   Deferred TSO Messages
+       User USER048 has       6   Deferred TSO Messages
+       User USER049 has      16   Deferred TSO Messages
+       User USER050 has       3   Deferred TSO Messages
+
+       Total Deferred TSO Messages in SYS1.BRODCAST        3130
+       Total # of Userids Defined  in SYS1.BRODCAST        3856
+
+---------------------------------------------------------------
+
+  Here is some of what you'll see if you issue BDMUSERS ALL, against
+a BRODCAST Dataset that is full of messages and defined Userids:
+
+BDMUSERS PROGRAM  -  Broadcast Master  Version   1.5.0A
+Copyright (c) 1995-2025 Sam Golob Systems Programming  LLC - All Rights Reserved
+
+0004E2  00   USRA001        Defined USERID in BRODCAST
+0004E2  01   USRA002        Defined USERID in BRODCAST
+0004E2  02   USRA003        Defined USERID in BRODCAST
+0004E2  03   USRA004        Defined USERID in BRODCAST
+0004E2  04   USRA005        Defined USERID in BRODCAST
+0004E2  05   USRA006        Defined USERID in BRODCAST
+0004E2  06   USRA007        Defined USERID in BRODCAST
+0004E2  07   USRA008        Defined USERID in BRODCAST
+ USR0001  0012B1  0012D5        USERID pointers
+0004E2  08   USR0001        Defined USERID in BRODCAST
+       User USR0001 has      37   Deferred TSO Messages
+0004E3  00   USRB000        Defined USERID in BRODCAST
+0004E3  01   USRB001        Defined USERID in BRODCAST
+0004E3  02   USRB002        Defined USERID in BRODCAST
+0004E3  03   USRB003        Defined USERID in BRODCAST
+
+  .  .  .  .  .  .  .  .
+
+00068D  07   USRT001        Defined USERID in BRODCAST
+00068D  08   USRT002        Defined USERID in BRODCAST
+00068E  00   USRT003        Defined USERID in BRODCAST
+00068E  01   USRT004        Defined USERID in BRODCAST
+ USRU001  000F5E  0012B0        USERID pointers
+00068E  02   USRU001        Defined USERID in BRODCAST
+       User USRU001 has      16   Deferred TSO Messages
+ USRV001  0012D6  0012D8        USERID pointers
+00068E  03   USRV001        Defined USERID in BRODCAST
+       User USRV001 has       3   Deferred TSO Messages
+
+       Total Deferred TSO Messages in SYS1.BRODCAST        3130
+       Total # of Userids Defined  in SYS1.BRODCAST        3856
+
+---------------------------------------------------------------
+
+
+Program Logic:
+------- -----
+
+  Basically, the BDMUSERS program runs through all the Userid Records
+in the BRODCAST Dataset, but instead of displaying the messages
+themselves, it merely counts them, if outstanding User Messages exist
+for a given Userid.
+
+  If you don't say A or ALL as a parameter to the BDMUSERS command,
+then the program completely ignores the display of Userids that don't
+have any outstanding messages attached to them.
+
+  If you do say A or ALL as a second parameter to BDMUSERS, then EVERY
+Userid, including those without attached messages, is displayed.  Any
+Userids WITH attached messages, get the counts of the messages, and
+an additional display of the starting and ending RBA addresses for the
+first and last message attached to them.
+
+  See the sample reports shown above, and you'll get the idea.
+
+
+Error Handling:
+----- --------
+
+  If the BRODCAST DD allocation is missing, then BDMUSERS issues
+the following message:
+
+BDMUSERS PROGRAM  -  Broadcast Master  Version   1.5.0A
+Copyright (c) 1995-2025 Sam Golob Systems Programming  LLC - All Rights Reserved
+
+       Bad Open - ALLOC F(BRODCAST) DA(SYS1.BRODCAST) SH REU
+

@@ -1,0 +1,87 @@
+---   BDMNUPD  PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+ BDMNUPD  -  Turn on the Bit in the TSO Vector Table Control
+             Block which tells TSO that the Incore copy of the
+             Global Notices must be updated.  Before TSO/E
+             Release 3, only OPER SEND'  ',SAVE or DELETE would
+             read this bit and update the table.  With TSO/E
+             Release 3 (z/OS 1.3 and later), LISTBC interrogates
+             this bit and updates the table.
+
+
+Execution Mode:   TSO Command - using the PUTLINE interface
+--------- ----       ****  Must be APF Authorized  ****
+
+Description of Operation:
+----------- -- ---------
+
+  The BDMNUPD program runs the appropriate control blocks and turns
+on the appropriate bit.  In order to do this, the command must be
+APF Authorized, and it must be in the IKJEFTE2 table, or in the
+Authorized TSO command section of the PARMLIB IKJTSOxx member which
+is currently active.
+
+
+JCL Requirements or TSO Allocations:
+--- ------------ -- --- -----------
+
+  None.
+
+
+Subcommands:   none
+-----------
+
+            INSTRUCTIONS FOR BDMNUPD  TSO COMMAND
+            ------------ --- -------- --- -------
+         BDMNUPD    -  Display all Global Notices (showing the
+                       Notice number)
+
+Sample Report:
+------ ------
+
+
+ BDMNUPD  PROGRAM - Broadcast Master  Version   1.5.0A
+ Copyright (c) 1995-2025 Sam Golob Systems Programming LLC - All Rights Reserved
+ -------------------------------------------------------------------------------
+ The purpose of the BDMNUPD program is to force an
+ update to the Incore Notices Table which LISTBC reads.
+ The need for update is signalled by the TSVTNCTU bit
+ in the TSO Vector Table, mapped by macro IKJTSVT.
+ Once the TSVTNCTU bit has been set, it depends which
+ TSO release you have, as to what program will interro-
+ gate the bit, and update the Incore Notices Table.
+      -  The TSVTNCTU bit has now been set  -
+ At TSO/E Release 3 and above, running LISTBC alone
+ will create a new Incore Notices Table.
+ Below TSO/E Release 3, you have to do an
+  OPER SEND ' ',SAVE first.
+ This means that z/OS 1.2 and below, will require the
+  OPER SEND ' ',SAVE.
+ And z/OS 1.3 and above, only requires that someone
+  somewhere in the system, will execute LISTBC, which
+  means that all that is necessary is that someone will
+  LOGON to a TSO session.
+ This release of TSO/E is:  3.08.0 .
+ -------------------------------------------------------------------------------
+
+Program Logic:
+------- -----
+
+  The basic principles of the program logic were mentioned above,
+in the "Description of Operation" section, and in the Sample Report.
+
+Error Handling:
+----- --------
+
+  If the BDMNUPD load module is not running APF Authorized, then the
+following message is issued:
+
+BDMNUPD  PROGRAM - Broadcast Master  Version   1.5.0A
+Copyright (c) 1995-2025 Sam Golob Systems Programming LLC - All Rights Reserved
+-------------------------------------------------------------------------------
+TSVTNCTU bit has not been set because APF authorization is needed.
+-------------------------------------------------------------------------------
+
+

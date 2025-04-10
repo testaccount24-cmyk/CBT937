@@ -1,0 +1,151 @@
+---   BDMREST  PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+
+ BDMREST  -  Restore the dumped BRODCAST Dataset records which
+             were created by the BDMDUMP program, and which are
+             in a Sequential Format, non-keyed blocked file, into
+             a Direct Access (DSORG=DA) properly formatted new
+             BRODCAST Dataset, which is properly keyed also, and
+             unblocked.  Special adjustment has to be made to the
+             empty User Message Records, which must contain their
+             relative position on the track, in their first data
+             byte.  This is automatically adjusted by the BDMREST
+             Restore program.
+
+
+Execution Mode:   Batch Program
+--------- ----
+
+Description of Operation:
+----------- -- ---------
+
+  See also, the description of the BDMEXPND program, and consider
+using that program, if you need to.
+
+  The BDMREST program reloads a DSORG=DA database, which is the keyed
+BRODCAST Dataset, from records that were previously sequentialized
+from an existing BRODCAST Dataset, by the BDMDUMP program.
+
+  If end-of-extent occurs prematurely, then the number of records
+actually written is reported, and an allocation recommendation is
+made, as to how many tracks you have to allocate in the PRIMARY
+extent.
+
+  Only the number of records originally dumped, is restored by the
+BDMREST program.  In other words, BDMREST cannot make the original
+BRODCAST Dataset larger.  But our other program, BDMEXPND, makes
+the BRODCAST Dataset larger, filling all PRIMARY allocated space
+with empty User Message Records.
+
+  Depending on your needs, you should consider which program to use.
+There is another path too.  This may seem complicated, but it can be
+set up in a batch job, and its normal running time, for an average
+sized BRODCAST Dataset, should be less than two minutes.  The approach
+is as follows:
+
+  You might make a completely new BRODCAST Dataset using the BDMINIT
+program, which allows adjustments of all sizes, and numbers of
+records, using SYSIN cards to control the numbers of each type of
+record.  Then you can dump the Userids from the old BRODCAST Dataset
+using the BDMGTUID program, sorting them using BDMUSORT, and you
+reload them using BDMULOAD.  Next, for the User Messages, you can dump
+them using the BDMGTMSG program, and reload them into the new BRODCAST
+Dataset using the BDMMLOAD (fast message loader) program.  Once set
+up, this method can make you a brand new BRODCAST Dataset which is
+completely reorganized, and do it in very fast time.
+
+
+JCL Requirements:
+--- ------------
+
+  The BDMREST program, is a relatively simple program that restores
+a DSORG=DA database from an DSORG=PS sequential backup.  Three DD
+names are required.  The BRODDUMP DD name contains the backup.  The
+BRODCAST DD name allocates the newly restored BRODCAST Dataset, and
+the SYSPRINT DD name contains the report of results.
+
+  Required DD names -
+
+BRODCAST - This is the BRODCAST Dataset that is being restored.
+
+      Sample JCL definition for the new BRODCAST dataset.
+
+  //BRODCAST DD  DSN=SBGOLOB.NEW.BRODCAST,DISP=(NEW,CATLG,DELETE),
+  //         DCB=(DSORG=DA,RECFM=FB,BLKSIZE=129,KEYLEN=1,LRECL=129),
+  //         SPACE=(TRK,(300,30),RLSE),UNIT=SYSALLDA,VOL=SER=WORK05
+
+BRODDUMP - This is the FB-130 dataset that contains the dumped
+           records from BRODCAST.
+
+      Sample JCL definition for BRODDUMP DD name.
+
+  //BRODDUMP DD  DISP=SHR,DSN=SBGOLOB.DUMP.NEW.BRODCAST
+
+SYSPRINT - A SYSOUT DD name which contains the report showing
+           the success or failure of the Restore process.
+
+   Report Appearance (SYSPRINT)
+   ------ ---------- ----------
+
+ ---   BDMREST    ---   BRODCAST Dataset Restore Program   ---
+
+
+                This program creates a copy of the BRODCAST
+                dataset from a BDMDUMP file, which had originally
+                been created from a BRODCAST dataset or a copy.
+                The restored dataset must reside in one extent.
+                This program can restore BRODCAST across device
+                types of different geometry, and will report on
+                how many tracks exactly, should be used for the
+                allocation of the output dataset.
+
+
+      Expected Number of Records in Copy, from Header :        9750
+      Number of Records Actually Loaded into the Copy :        9750
+      Number of Records per Track for this Device Type:          50
+      Expected Number of Tracks to be Allocated       :         195
+
+        Loading Action Completed Successfully .
+
+
+Program Logic:
+------- -----
+
+  The BDMREST program takes advantage of the BSAM technique for
+loading a direct access dataset initially, called MACRF=WL.  The
+WRITE operation returns a return code of 4 at end-of-track, and 8
+at end-of-extent.
+
+  If end-of-extent occurs prematurely, then the number of records
+actually written is reported, and an allocation recommendation is
+made, as to how many tracks you have to allocate in the PRIMARY
+extent.
+
+  Only the number of records originally dumped, is restored by the
+BDMREST program.  In other words, BDMREST cannot make the original
+BRODCAST Dataset larger.  But our other program, BDMEXPND, makes
+the BRODCAST Dataset larger, filling all PRIMARY allocated space
+with empty User Message Records.
+
+
+Error Handling:
+----- --------
+
+  If the PRIMARY allocation for the newly loaded BRODCAST DD name
+is too small, the SYSPRINT report shows the following information,
+of which we present a sample:
+
+    Expected Number of Records in Copy, from Header :        9750
+    Number of Records Actually Loaded into the Copy :        9650
+    Number of Records per Track for this Device Type:          50
+    Expected Number of Tracks to be Allocated       :         195
+
+    Loading Interrupted Unexpectedly....
+    Please rerun, and allocate          195   tracks
+     in a single extent.
+
+    WARNING - Output BRODCAST dataset is not usable !
+
+

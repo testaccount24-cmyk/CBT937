@@ -1,0 +1,251 @@
+
+          ---   Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+               Introduction to the BRODCAST Dataset  -  2
+               ------------ -- --- -------- -------     -
+
+STRUCTURE OF THE BRODCAST RECORD TYPES
+
+      The BRODCAST Dataset contains two different types of functions,
+with separate record types to support both.  These are to maintain
+and display:
+
+1.  Global Notification Messages
+2.  User Messages
+
+      Global Notification Messages send notices to all TSO users who
+LOGON.  The sending of these messages is triggered by an automatic
+invocation of the TSO LISTBC command at LOGON time.
+
+      User messages are also sent to each TSO user at LOGON time by
+the LISTBC command, but only if the user has any.
+
+      Each set of Notices and User Messages is kept in a different
+part of the BRODCAST Dataset and needs different record types to
+hold the information.
+
+
+USER MESSAGES
+
+      User Messages (Type X'03' in the key byte) are chained off the
+Userids that are in the Userid Records (Type X'01' in the key).  Nine
+Userids per Userid Record are in the BRODCAST Dataset.  Each Userid
+record (13 bytes total) contains the Userid name (7 characters) followed
+by six bytes.  The first three bytes of the six are the RBA (Relative
+Record Address) of the first user message, and the next three bytes are
+the RBA of the last user message.  In between, the user messages are
+chained to each other, with each user message pointing to the next one,
+in its last 3 bytes, which contains the RBA of the next message for that
+Id.  The last message for a userid points to nowhere, as the RBA of the
+next message.  X'000000' is in the next RBA field of the last message
+for a user.
+
+      In other words, the Userid Record (one of the nine Userids that
+are in the Type X'01' BRODCAST records) contains a 7-byte Userid,
+followed by a pointer to the first User Message for that Id, and a
+pointer to its last User Message.  If there is only one User Message for
+that Id, then these two numbers are the same.  In between, each message
+is chained to the RBA for the next one, except for the last message for
+that Id, which points to X'000000'.
+
+      With this arrangement, IBM's SEND command can add a new message by
+going directly the Last Userid pointer in the Userid Record, and writing
+another message after it, chaining it to the last message in the chain.
+And the LISTBC command can start with the first message in the chain,
+from the First Message pointer in the Userid Record, and run the chain
+to display (and delete) all of the User Messages for that Userid.
+
+     So, if you're writing a new message, you start from the Last
+Message pointer.  If you're reading all the messages from the beginning,
+you start from the First Message pointer.
+
+     Using the Broadcast Master package from Sam Golob Systems
+Programming LLC, you can do something unique, which I don't believe is
+found in other packages.  When displaying messages for a Userid, using
+the BDMLIST TSO command, you can display SOME of the messages, and you
+are not forced to display ALL of them.  Similarly, when deleting
+messages using the BDMDEL command, you can delete SOME of the messages
+for a Userid, and you are not forced to delete ALL of them.
+
+     This is accomplished using a scheme of SKIP(mm) and MSGS(nn), which
+gives you complete control.  SKIP(mm) means you skip the first mm
+messages for that Userid.  MSGS(nn) means you display, or delete, the
+NEXT nn messages (after the SKIP), and ONLY that number.  Therefore, if
+you're displaying messages, you'll display the nn messages that follow
+the first mm.  And if you're deleting messages, you'll delete only the
+next nn messages that follow the first mm.  When deleting messages, the
+BDMDEL command automatically chains the last undeleted message from the
+SKIP(mm), to the first undeleted message after the nn messages specified
+in MSGS(nn).  If you think about it, this scheme will allow you to
+delete, or display any pattern of messages that you may want to delete
+or display.
+
+
+GLOBAL NOTIFICATION MESSAGES
+
+     Global Notification Messages are displayed by the LISTBC command
+for ALL TSO users who issue it.  The origin of these Global messages
+is the X'00' (Global Notification Messages Directory) record type,
+which is the Directory for the Global Notification Messages, and the
+X'02' (Global Notification Messages) record type, which contains the
+messages themselves.  Each Type X'00' directory record (5 bytes long)
+points to a Global Notification Message record (Type X'02') and says
+if that Message record is active or inactive, and it points to the RBA
+where the Message record is.
+
+      Actually, LISTBC displays an incore copy of these X'02' record
+types, and it does not usually access the BRODCAST Dataset itself.
+The reason for that, is that if, say, many TSO users would LOGON at
+the same time and therefore issue LISTBC commands automatically at
+LOGON time, they wouldn't have to enqueue on the BRODCAST Dataset
+itself and cause a bottleneck on it.  LISTBC will update the incore
+copy of the Notices by rereading the BRODCAST Dataset, whenever a
+certain bit is set.  This bit is set either by the OPER SEND, IBM
+commands, or by the Broadcast Master's only APF authorized TSO
+command, called BDMNUPD.  The following explanatory messages are
+issued by the BDMNUPD command:
+
+      BDMNUPD  PROGRAM - Broadcast Master  Version   1.5.0A
+      Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+         - All Rights Reserved
+      ----------------------------------------------------------
+      The purpose of the BDMNUPD program is to force an
+      update to the Incore Notices Table which LISTBC reads.
+      The need for update is signalled by the TSVTNCTU bit
+      in the TSO Vector Table, mapped by macro IKJTSVT.
+      Once the TSVTNCTU bit has been set, it depends which
+      TSO release you have, as to what program will interro-
+      gate the bit, and update the Incore Notices Table.
+           -  The TSVTNCTU bit has now been set  -
+      At TSO/E Release 3 and above, running LISTBC alone
+      will create a new Incore Notices Table.
+      Below TSO/E Release 3, you have to do an
+       OPER SEND ' ',SAVE first.
+      This means that z/OS 1.2 and below, will require the
+       OPER SEND ' ',SAVE.
+      And z/OS 1.3 and above, only requires that someone
+       somewhere in the system, will execute LISTBC, which
+       means that all that is necessary is that someone will
+       LOGON to a TSO session.
+      This release of TSO/E is:  3.08.0 .
+      ----------------------------------------------------------
+
+
+UPDATING THE GLOBAL NOTIFICATION MESSAGES
+
+
+     The IBM OPER SEND,SAVE and OPER SEND DELETE commands write and
+delete messages for the Global Notify service of BRODCAST.  OPER
+SEND, SAVE will write a new message into the next available message
+number slot.  But to delete a message using OPER SEND DELETE, you
+have to actually know the message number.  So you need the SEND LIST
+subcommand of OPER to display all the messages in the Global
+Notification section by number.  The Broacast Master package includes
+a TSO command to do this, called BDMNLIST.  Output from BDMNLIST is
+compatible with the OPER SEND LIST output.  An example for BDMNLIST
+is as follows:
+
+   MSGNO 001 ---------------------------------------------------
+   MSGNO 002 * * * * * * * * * * * * * * * * * * * * * * * * * *
+   MSGNO 003 * * * * * * * * * * * * * * * * * * * * * * * * * *
+   MSGNO 004 * *                                             * *
+   MSGNO 005 * *                                             * *
+   MSGNO 006 * *      WELCOME TO THE Z-18 MVS SYSTEM...      * *
+   MSGNO 007 * *                                             * *
+   MSGNO 008 * *                                             * *
+   MSGNO 009 * * * * * * * * * * * * * * * * * * * * * * * * * *
+   MSGNO 010 * * * * * * * * * * * * * * * * * * * * * * * * * *
+   MSGNO 011 ---------------------------------------------------
+   MSGNO 012       It is our great pleasure to serve your
+   MSGNO 013               computing needs!
+   MSGNO 014
+
+And for the SEND LIST subcommand of OPER:
+
+   MSGNO 001 ---------------------------------------------------
+   MSGNO 002 * * * * * * * * * * * * * * * * * * * * * * * * * *
+   MSGNO 003 * * * * * * * * * * * * * * * * * * * * * * * * * *
+   MSGNO 004 * *                                             * *
+   MSGNO 005 * *                                             * *
+   MSGNO 006 * *      WELCOME TO THE Z-18 MVS SYSTEM...      * *
+   MSGNO 007 * *                                             * *
+   MSGNO 008 * *                                             * *
+   MSGNO 009 * * * * * * * * * * * * * * * * * * * * * * * * * *
+   MSGNO 010 * * * * * * * * * * * * * * * * * * * * * * * * * *
+   MSGNO 011 ---------------------------------------------------
+   MSGNO 012       It is our great pleasure to serve your
+   MSGNO 013               computing needs!
+   MSGNO 014
+
+You can see that these two outputs are just about identical.  The
+only difference in their apperarance is, that if there are no Notices
+in the BRODCAST Dataset, the IBM command gives the message:
+
+IKJ56951I NO BROADCAST MESSAGES
+
+and BDMNLIST gives the message:
+
+BDM576I   NO BROADCAST MESSAGE
+
+
+
+THE FREE SEARCH RECORD
+
+      In order to easily find the next free message record (Type X'FF')
+to write a new Userid Message into, the next free message record is
+normally pointed to by the Free Search Record (Type X'05') which has
+only one other thing in it.  And that thing is an RBA pointer to the
+next free User Message record, usually the one with the lowest RBA.
+The Free Search Record makes it easier for IBM's SEND TSO command, or
+the Broadcast Master's BDMSEND command, to find a new free message
+record to write a new User Message to.  Every time a new User Message
+is written to the BRODCAST Dataset, or deleted from the BRODCAST
+Dataset, the Free Search Record is updated to point to the next free
+Userid Message Record.
+
+      Please note that the Broadcast Master Bulk Message Loader
+program, called BDMMLOAD, also updates the Free Search Record after
+loading all messages that are to go to each given Userid.
+
+      So do the Broadcast Master programs:
+
+  BDMSEND  -  Write a new message to a BRODCAST Dataset
+  BDMDEL   -  Delete (all or some) messages for a given Userid
+
+which make sure that the Free Search Record is properly updated.
+
+
+THE FREE USER MESSAGE RECORD
+
+      The free User Message Record (Type X'FF') has one peculiarity,
+and this makes the BRODCAST Dataset device dependent.  It is, that in
+an X'FF' record, with X'FF' as the key byte, the first data byte has
+to be the binary "R" value from the "CCHHR" or "TTR" value of the
+record on DASD.  This means that the first data byte shows the
+relative place of that record on the track.  In other words, the first
+record on the track has first data byte X'01' and the second record on
+the track has data byte X'02'.  This is true ONLY if the record type
+is X'FF'.
+
+      For other record types, the first data byte contains other
+stuff.  For example, Type X'02' Notices records contain the binary
+length of the message in the first data byte.  So do the Type X'03'
+User Message records.  Notices Directory records and Userid Directory
+records do not contain anything special in the first data byte.  They
+are subdivided.  The Notices Directory records contain 25 Notices
+Directory entries.  The Userid Directory records contain 9 Userid
+Directory entries.  These are as much as will fit, onto a BRODCAST
+Dataset record, of 129 data bytes, minus the 3-byte chain pointer at
+the end of the record, and minus one more byte (for directory records,
+the 126th data byte contains X'7F').
+
+      The Broadcast Master packages contains tools to copy a BRODCAST
+dataset, with all its contents, across DASD devices of different type,
+for example, from a 3380 to a 3390.  The BDMDUMP and BDMREST programs
+(and the BDMEXPND program) can do this easily.  The first data bytes
+of the X'FF' records in the copied dataset are automatically adjusted
+to contain the correct track location, whatever the DASD device type.
+
+

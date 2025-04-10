@@ -1,0 +1,178 @@
+---   BDMEXPND PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+
+ BDMEXPND -  Restore the dumped BRODCAST Dataset records which
+             were created by the BDMDUMP program, and which are
+             in a Sequential Format, non-keyed blocked file, into
+             a Direct Access (DSORG=DA) properly formatted new
+             BRODCAST Dataset, which is properly keyed also, and
+             unblocked.  Special adjustment has to be made to the
+             empty User Message Records, which must contain their
+             relative position on the track, in their first data
+             byte.  This is automatically adjusted by the BDMEXPND
+             Restore program.  The BDMEXPND program can make the
+             restored BRODCAST Dataset larger, and will fill its
+             entire PRIMARY allocated extent, with empty User
+             Message Records.
+
+
+Execution Mode:   Batch Program
+--------- ----
+
+Description of Operation:
+----------- -- ---------
+
+  See also, the description of the BDMREST program, and consider
+using that program, if you need to keep the old BRODCAST Dataset
+size.
+
+  The BDMEXPND program reloads a DSORG=DA database, which is the keyed
+BRODCAST Dataset, from records that were previously sequentialized
+from an existing BRODCAST Dataset, using the BDMDUMP program.
+
+  If end-of-extent occurs prematurely, then the number of records
+actually written is reported, and an allocation recommendation is
+made, as to how many tracks you have to allocate in the PRIMARY
+extent.
+
+  If more PRIMARY space is allocated, than the minimum needed for
+the restore of the old BRODCAST Dataset's records, BDMEXPND will
+add more empty User Message Records to the end of the new BRODCAST
+Dataset, until the entire allocated PRIMARY extent is completely
+filled.
+
+  Depending on your needs, you should consider which program to use.
+If you do not want to expand your restored BRODCAST Dataset, you
+should use the BDMREST program.  If you want to make the restored
+BRODCAST Dataset bigger, you should use the BDMEXPND program.
+
+  There is another path too.  This may seem complicated, but it can
+be set up in a batch job, and its normal running time, for an average
+sized BRODCAST Dataset, should be less than two minutes.  The
+approach is as follows:
+
+  You might make a completely new BRODCAST Dataset using the BDMINIT
+program, which allows adjustments of all sizes, and numbers of
+records, using SYSIN cards to control the numbers of each type of
+record.  Then you can dump the Userids from the old BRODCAST Dataset
+using the BDMGTUID program, sorting them using BDMUSORT, and you
+reload them using BDMULOAD.  Next, for the User Messages, you can dump
+them using the BDMGTMSG program, and reload them into the new BRODCAST
+Dataset using the BDMMLOAD (fast message loader) program.  Once set
+up, this method can make you a brand new BRODCAST Dataset which is
+completely reorganized, and do it in very fast time.
+
+
+JCL Requirements:
+--- ------------
+
+  The BDMEXPND program, is a relatively simple program that restores
+a DSORG=DA database from an DSORG=PS sequential backup.  Three DD
+names are required.  The BRODDUMP DD name contains the backup.  The
+BRODCAST DD name allocates the newly restored BRODCAST Dataset, and
+the SYSPRINT DD name contains the report of results.
+
+  Required DD names -
+
+BRODCAST - This is the BRODCAST Dataset that is being restored.
+
+      Sample JCL definition for the new BRODCAST dataset.
+
+  //BRODCAST DD  DSN=SBGOLOB.NEW.BRODCAST,DISP=(NEW,CATLG,DELETE),
+  //         DCB=(DSORG=DA,RECFM=FB,BLKSIZE=129,KEYLEN=1,LRECL=129),
+  //         SPACE=(TRK,(300,30),RLSE),UNIT=SYSALLDA,VOL=SER=WORK05
+
+BRODDUMP - This is the FB-130 dataset that contains the dumped
+           records from BRODCAST.
+
+      Sample JCL definition for BRODDUMP DD name.
+
+  //BRODDUMP DD  DISP=SHR,DSN=SBGOLOB.DUMP.NEW.BRODCAST
+
+SYSPRINT - A SYSOUT DD name which contains the report showing
+           the success or failure of the Restore process.
+
+   Report Appearance (SYSPRINT)
+   ------ ---------- ----------
+
+ ---   BDMEXPND    ---   BRODCAST Dataset Restore Program  ---
+
+
+                This program creates a copy of the BRODCAST
+                dataset from a BDMDUMP file, which had originally
+                been created from a BRODCAST dataset or a copy.
+                The restored dataset must reside in one extent.
+                This program can restore BRODCAST across device
+                types of different geometry, and will report on
+                how many tracks exactly, should be used for the
+                allocation of the output dataset.
+
+
+      Expected Number of Records in Copy, from Header :        9750
+      Number of Records Actually Loaded into the Copy :       15000
+      Number of Records per Track for this Device Type:          50
+      Expected Number of Tracks to be Allocated       :         300
+      BRODCAST copy expanded successfully.  It now
+      contains     15000   records on       300 tracks
+      in a single extent.
+      Header Record updated successfully.
+
+
+Program Logic:
+------- -----
+
+  The BDMEXPND program takes advantage of the BSAM technique for
+loading a direct access dataset initially, called MACRF=WL.  The
+WRITE operation returns a return code of 4 at end-of-track, and 8
+at end-of-extent.
+
+  If end-of-extent occurs prematurely, then the number of records
+actually written is reported, and an allocation recommendation is
+made, as to how many tracks you have to allocate in the PRIMARY
+extent.
+
+  BDMEXPND fills the PRIMARY allocated space with extra empty User
+Message Records, until the PRIMARY allocated space is completely
+filled.  Since the header records of a BRODCAST Dataset contains
+the total number of records in that BRODCAST Dataset, and the number
+is now greater than the number in the original BRODCAST Dataset that
+was dumped, the new larger total number of records must be inserted
+into the BRODCAST Dataset header, after all records were loaded, and
+the actual number is known.  So BDMEXPND makes this adjustment to the
+BRODCAST header, and it reports that it was successfully done.
+
+
+Error Handling:
+----- --------
+
+  If the PRIMARY allocation for the newly loaded BRODCAST DD name
+is too small, the SYSPRINT report shows the following information,
+of which we present a sample:
+
+ ---   BDMEXPND    ---   BRODCAST Dataset Restore Program  ---
+
+
+                This program creates a copy of the BRODCAST
+                dataset from a BDMDUMP file, which had originally
+                been created from a BRODCAST dataset or a copy.
+                The restored dataset must reside in one extent.
+                This program can restore BRODCAST across device
+                types of different geometry, and will report on
+                how many tracks exactly, should be used for the
+                allocation of the output dataset.
+
+
+      Expected Number of Records in Copy, from Header :        9750
+      Number of Records Actually Loaded into the Copy :        9650
+      Number of Records per Track for this Device Type:          50
+      Expected Number of Tracks to be Allocated       :         195
+
+      Loading Interrupted Unexpectedly....
+      Please rerun, and allocate          195   tracks
+      in a single extent.
+
+      WARNING - Output BRODCAST dataset is not usable !
+
+

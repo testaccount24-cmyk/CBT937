@@ -1,0 +1,12 @@
+
+          ---   Broadcast Master  Version   1.5.0B   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+Member ###BAT describes all the programs in this system, which are
+executed in batch.
+
+Member ###TSO describes all the programs in this system, which are
+run as TSO commands.
+
+

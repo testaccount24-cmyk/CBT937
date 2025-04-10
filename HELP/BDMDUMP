@@ -1,0 +1,110 @@
+---   BDMDUMP  PROGRAM  -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+ BDMDUMP  -  Dump the records from a DSORG=DA BRODCAST Dataset
+             which is Direct Access, into a DSORG=PS output file
+             that can be transported anywhere.  The output file
+             contains all the information in the BRODCAST Dataset
+             records, but since it is a sequential file, it can
+             be moved anywhere.  A new BRODCAST Dataset can be
+             created and loaded from the dumped file, by using
+             either the BDMREST or BDMEXPND batch programs.
+
+
+Execution Mode:   Batch Program
+--------- ----
+
+Description of Operation:
+----------- -- ---------
+
+  The BDMDUMP program makes an FB backup of a BRODCAST Dataset, which
+may be transported anywhere, and restored to a legitimately formatted
+BRODCAST Dataset by either the BDMREST or BDMEXPND programs.
+
+  This is accomplished by merely combining the one-byte key data and
+the 129 bytes of "data" data, into one 130-byte record, and writing
+it out to an OUTPUT file using QSAM.
+
+  Please see the explanation of both the BDMREST and BDMEXPND programs.
+
+  BDMREST will restore the output file from the BDMDUMP program, into
+a formatted BRODCAST Dataset containing exactly the same number of
+records as the original BRODCAST Dataset.  On the other hand, BDMEXPND,
+even though it does the same thing, will expand the newly formatted
+BRODCAST Dataset to fit into ALL of the PRIMARY allocated space, even
+if it is bigger than the original.  BDMEXPND does so, by adding extra
+empty User Message Records to the output BRODCAST Dataset until all the
+allocated space in its primary extent is filled.
+
+
+JCL Requirements:
+--- ------------
+
+  The BDMDUMP program, although it could have been constructed far
+more simply, was created from (an early version of) the BDMSCAN program
+and therefore, it uses the same DD names that BDMSCAN does.  There are
+three required DD names and two optional DD names:
+
+
+  Required DD names -
+
+BRODCAST - This is the BRODCAST Dataset that is being dumped.
+
+      Sample JCL definition for BRODUMMY DD name.
+
+      //BRODCAST DD  DISP=SHR,DSN=SBGOLOB.NEW.BRODCAST
+
+BRODDUMP - This is the FB-130 dataset that contains the dumped
+           records from BRODCAST.
+
+      Sample JCL definition for BRODCAST DD name.
+
+      //BRODDUMP DD  DISP=(NEW,CATLG,CATLG),
+      //         DSN=SBGOLOB.DUMP.NEW.BRODCAST,
+      //         DCB=(RECFM=FB,LRECL=130,BLKSIZE=27950),
+      //         SPACE=(TRK,(30,30),RLSE)
+
+BRODMAP  - This is a sysout dataset to contain the summary report
+           of the general structure of the DUMPed BRODCAST Dataset,
+           the Userids having messages, and so forth.  This report
+           is very similar to the BDMSCAN BRODMAP report.
+
+  Optional DD names -
+
+BRODPRNT - A SYSOUT DD name which contains the detailed structure
+           of all the dumped BRODCAST Dataset records.  If coded,
+           the BRODPRNT DD name will contain this detailed data.
+           If not coded, this DD name is not OPENed by the BDMDUMP
+           program.
+
+BRODUSER - A SYSOUT DD name which contains the detailed structure
+           of all the Userid Message chains.  If coded, it contains
+           the data, but if not coded, this DD name is not OPENed.
+
+
+Program Logic:
+------- -----
+
+  Similar to the logic of BDMSCAN, but in the process of analyzing
+the BRODCAST Dataset in general, when it is in the process of reading
+all of the records in RBA order, BDMDUMP puts key and record together,
+and dumps the resulting 130-byte record into the BRODDUMP dataset.  So
+most of the functionality of BDMSCAN is also carried out by BDMDUMP,
+but the records of the BRODCAST Dataset are dumped, in addition to
+doing the analysis of the dataset pointed to by the BRODCAST DD name.
+
+  The resulting report(s) produced by BDMDUMP are very useful in
+showing us details about the BRODCAST Dataset from where the BRODDUMP
+output dataset was taken.
+
+
+Error Handling:
+----- --------
+
+  Similar to BDMSCAN.  The DD names are protected by doing a TIOT
+scan before they are OPENed.  This means that if one of the necessary
+DD names is missing, an informational message is displayed, to show
+how to correct the JCL by supplying the correct DD name information.
+
+

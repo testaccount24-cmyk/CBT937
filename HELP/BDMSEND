@@ -1,0 +1,136 @@
+---   BDMSEND PROGRAM   -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+ BDMSEND -   SEND a User Message to a particular BRODCAST Dataset,
+             not necessarily the Active BRODCAST Dataset in the
+             system.
+
+
+Execution Mode:   TSO Command - using the PUTLINE interface
+--------- ----
+
+Description of Operation:
+----------- -- ---------
+
+  The BDMSEND program is used to SEND a User Message to a particular
+BRODCAST Dataset, in which that Userid is defined.
+
+
+JCL Requirements or TSO Allocations:
+--- ------------ -- --- -----------
+
+  The BDMSEND program is a TSO command, but it uses the PUTLINE
+interface to write its output to the terminal.  Therefore you can
+run the BDMSEND program under TSO-in-batch, and still see its
+output.  You can (of course) also run BDMSEND as a TSO command.
+
+Allocation Requirement -
+
+  The particular copy of the BRODCAST dataset which you want to
+look at, must be pointed to by the BRODCAST DD name, as follows:
+
+ALLOC FI(BRODCAST) DA(your.BRODCAST.dataset) SH REUSE
+
+or
+
+//BRODCAST  DD  DISP=SHR,DSN=your.BRODCAST.dataset
+
+
+Subcommands:
+-----------
+            INSTRUCTIONS FOR BDMSEND TSO COMMAND
+            ------------ --- ------ --- -------
+      BDMSEND userid Message Text          - SEND a Message to a
+                                             particular Userid.
+
+      BDMSEND userid 'Message Text'        - SEND a Message to a
+                                             particular Userid
+                                             (enclosed in single
+                                             quotes).
+
+      BDMSEND userid "Message Text"        - SEND a Message to a
+                                             particular Userid
+                                             (enclosed in double
+                                             quotes).
+
+      BDMSEND userid =Message Text=        - SEND a Message to a
+                                             particular Userid
+                                             (enclosed in equal
+                                             signs).
+
+      BDMSEND userid #Message Text#        - SEND a Message to a
+                                             particular Userid
+                                             (enclosed in pound
+                                             signs).
+
+      BDMSEND userid :Message Text:        - SEND a Message to a
+                                             particular Userid
+                                             (enclosed in colons)
+
+
+      BDMSEND userid {Message Text}        - SEND a Message to a
+                                             particular Userid
+                                             (enclosed in curly
+                                             brackets)
+
+Report:
+------
+
+  Here is what you see if Userid IBMUSER has one sample message
+  and we issue:
+
+  BDMSEND USR1247 This is my message.
+
+    And the resulting reply is:
+
+  This is my message.
+  MESSAGE SENT TO USERID: USR1247
+
+
+Program Logic:
+------- -----
+
+  BDMSEND parses, first for the Userid that the message is to be sent
+to, and after a space, the Message is parsed and is expected to extend
+to the end of the command buffer.  If you want to include spaces,
+
+
+
+
+
+
+
+Error Handling:
+----- --------
+
+  BDMSEND checks the entered Userid (the first positional keyword)
+and runs the chain of Userid records to see if this Userid is there.
+If it is not, the following message is issued:
+
+ YOU HAVE TO SPECIFY A USERID AFTER THE COMMAND NAME
+
+* ----------------------------------------------------------------- *
+
+  BDMSEND checks if a message is sent after the Userid Name.  If
+there is no second parameter, containing message text, BDMSEND issues
+the following message:
+
+ YOU HAVE TO SPECIFY MESSAGE TEXT AFTER THE USERID
+
+* ----------------------------------------------------------------- *
+
+  If a Userid is entered, that is not defined as a Userid in the
+BRODCAST Dataset, then BDMSEND issues the following message:
+
+ * - - NO USERID RECORD FOR USER USR1247  - - *
+
+* ----------------------------------------------------------------- *
+
+  If the BRODCAST DD allocation is missing, and BDMSEND syntax is
+otherwise correct, then BDMSEND issues the following message:
+
+ IEC130I BRODCAST DD STATEMENT MISSING
+        BAD OPEN - ALLOC F(BRODCAST) DA(SYS1.BRODCAST) SH REU
+
+

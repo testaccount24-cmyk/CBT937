@@ -1,0 +1,81 @@
+---   BDMUTIL PROGRAM   -  Broadcast Master  Version   1.5.0A   ---
+     Copyright (c) 1995-2025 Sam Golob Systems Programming LLC
+                     All Rights Reserved
+
+ BDMUTIL -   ISPF Interface to quickly do BRODCAST Dataset
+             maintenance.  This REXX is a frontend to the
+             BDMLIST, BDMDEL, and BDMUSERS programs.
+             It will quickly display all Userids with
+             outstanding User Messages, how many each has,
+             and you can Display, Print, or Delete them using
+             the SKIP(mm) and MSGS(nn) operands as well.
+
+
+Execution Mode:   TSO REXX Exec (Fullscreen Mode under ISPF)
+--------- ----
+
+Description of Operation:
+----------- -- ---------
+
+  You run the BDMUTIL exec against a BRODCAST Dataset.
+
+  The command is:   BDMUTIL  brodcast.dataset.name
+
+  The BDMUTIL program shows you a table of all Userids with pending
+User Messages, as follows:
+
+ 2007/05/14 ---------------  SYS1.BRODCAST Utility  -------- Row 1 to 17
+Cmd input ===>                                                Scroll ===
+ (SORTID, SORTTOT)
+
+    CPU Type:  1247  CPs:  1  SU/Sec: 6644.5  Real:   500M  Exp:     0M
+    Active SMF id: SYS1               Number of Active TSUs:        2
+    Broadcast DSN: SBGOLOB.BIGN.BRODCAST
+    Volume: WORK05     Unit:  3390     Creation Date: 2007/133
+    Dsorg:  DA    Recfm:    F   Keyl:    1  Lrecl:   129   Blksize:   129
+
+Action    SKIP    MSGS   ID        Number Of  TSO ID
+(S/D/P)   (nn)    (nn)             Messages   Status
+------------------------------------------------------------------------
+   _                     USR0001          37
+   _                     USR0002        1875
+   _                     USR0003         256
+   _                     USR0004           1
+   _                     USR0005           4
+   _                     USR0006           5
+   _                     USR0007           1
+   _                     USR0008          17
+   _                     USR0009          28
+   _                     USR0010          38
+   _                     USR0011           6
+   _                     USR0012           4
+   _                     USR0013           4
+   _                     USR0014           3
+   _                     USR0015           8
+   _                     USR0016           6
+
+  .  .  .  .  .  .  .  .  .  .  .
+
+  and so forth....
+
+
+
+JCL Requirements or TSO Allocations:
+--- ------------ -- --- -----------
+
+  The BDMUTIL Exec performs its own allocations.  However, you
+tell it (in a parameter) which BRODCAST Dataset you want to point
+it at.  For example:
+
+  BDMUTIL 'SBGOLOB.NEW.BRODCAST'
+
+
+
+Error Handling:
+----- --------
+
+  BDMLIST checks the entered values, of SKIP(mm) and MSGS(nn) and
+rejects them if they are not numeric.
+
+  Other sensible validation is also done by the REXX Exec.
+
